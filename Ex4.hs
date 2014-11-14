@@ -26,20 +26,20 @@ m2 p1 = {
   return k;
 -}
 
-main = run $ do
-  writeAttr "x" newObject
-  writeAttr "f1" (async (readAttr "x") m1)
-  writeAttr "f2" (readAttr "f1" >>= \ f1 -> async (readAttr "x") (m2 f1))
-  writeAttr "y" (getFuture (readAttr "f2"))
+main = run $ \ this -> do
+  writeAttr this "x" newObject
+  writeAttr this "f1" (async (readAttr this "x") m1)
+  writeAttr this "f2" (do f1 <- readAttr this "f1"; async (readAttr this "x") (m2 f1))
+  writeAttr this "y" (getFuture (readAttr this "f2"))
 
-m1 = do
-  writeAttr "z" newObject
-  stop (readAttr "z")
+m1 this =  do
+  writeAttr this "z" newObject
+  stop (readAttr this "z")
 
-m2 p1 = do
-  writeAttr "r1" (getFuture (return p1))
-  ifM (readAttr "z" === readAttr "r1") (writeAttr "k" (readAttr "r1")) (writeAttr "k" thisObject)
-  stop (readAttr "k")
+m2 p1 this = do
+  writeAttr this "r1" (getFuture (return p1))
+  ifM (readAttr this "z" === readAttr this "r1") (writeAttr this "k" (readAttr this "r1")) (writeAttr this "k" (return this))
+  stop (readAttr this "k")
 
 {- passes, output
 Counter: 5

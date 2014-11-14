@@ -16,14 +16,14 @@ m1 = {
 
 -}
 
-main = run $ do
-  writeAttr "x" newObject
-  writeAttr "f" (async (readAttr "x") m1)
-  writeAttr "y" (getFuture (readAttr "f"))
+main = run $ \ this -> do
+  writeAttr this "x" newObject
+  writeAttr this "f" (async (readAttr this "x") m1)
+  writeAttr this "y" (getFuture (readAttr this "f"))
 
-m1 = do
-  writeAttr "z" newObject
-  stop (readAttr "z")
+m1 this = do
+  writeAttr this "z" newObject
+  stop (readAttr this "z")
 
 {- passes, output
 (4,

@@ -19,15 +19,15 @@ m1 = {
 
 -}
 
-main = run $ do
-  writeAttr "x" newObject
-  writeAttr "f" (async (readAttr "x") m1)
-  writeAttr "y" (getFuture (readAttr "f"))
+main = run $ \ this -> do
+  writeAttr this "x" newObject
+  writeAttr this "f" (async (readAttr this "x") m1)
+  writeAttr this "y" (getFuture (readAttr this "f"))
 
-m1 = do
-  writeAttr "z" newObject
-  while (readAttr "z" === readAttr "z") $ do
+m1 this = do
+  writeAttr this "z" newObject
+  while (readAttr this "z" === readAttr this "z") $ do
        skip
-  stop (readAttr "z")
+  stop (readAttr this "z")
 
 {- passes, diverges, as it should -}

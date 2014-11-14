@@ -11,14 +11,13 @@ type FutHeap = M.Map FutRef (Maybe Int)
 type ObjHeap = M.Map ObjRef Attrs
 
 type SharedState = State (Counter, -- increasing counter to generate unique new pointer-references from
-                          Heap,    -- heap of objects vals and futures vals with references
-                          ObjRef)  -- the current this reference
+                          Heap)    -- heap of objects vals and futures vals with references
 
 type Counter = Int
 
-type Attrs = M.Map String Val -- attr is a string, this is a mapping from string to vals
+type Attrs = M.Map String Ref -- attr is a string, this is a mapping from string to vals
 
-type Val = Int                  -- our values are refs, ObjRefs or FutRefs, assume well-typed
+type Ref = Int                  -- our values are refs, ObjRefs or FutRefs, assume well-typed
 type FutRef = Int
 type ObjRef = Int
 
@@ -29,7 +28,7 @@ data Action m = Atom (m (Action m))
               | Async ObjRef (Action m) (Action m) FutRef
               | Await FutRef (Action m)
               | Get FutRef (m (Action m))
-              | Stop Val
+              | Stop Ref
               | Done
 
 -- the ContT monad transformer

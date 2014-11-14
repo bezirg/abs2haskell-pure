@@ -10,10 +10,10 @@ main = {
 }
 -}
 
-main = run $ do
-  writeAttr "t" thisObject
-  writeAttr "x" newObject
-  writeAttr "y" (readAttr "x")
+main = run $ \ this -> do
+  writeAttr this "t" (return this)
+  writeAttr this "x" newObject
+  writeAttr this "y" (readAttr this "x")
 
 
 {- passes, output
