@@ -23,7 +23,7 @@ main = run $ \ this -> do
 
 m1 this = do
   writeAttr this "z" newObject
-  stop (readAttr this "z")
+  return_ (readAttr this "z")
 
 {- passes, output
 (4,

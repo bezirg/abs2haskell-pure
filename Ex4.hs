@@ -34,12 +34,12 @@ main = run $ \ this -> do
 
 m1 this =  do
   writeAttr this "z" newObject
-  stop (readAttr this "z")
+  return_ (readAttr this "z")
 
 m2 p1 this = do
   writeAttr this "r1" (getFuture (return p1))
   ifM (readAttr this "z" === readAttr this "r1") (writeAttr this "k" (readAttr this "r1")) (writeAttr this "k" (return this))
-  stop (readAttr this "k")
+  return_ (readAttr this "k")
 
 {- passes, output
 Counter: 5

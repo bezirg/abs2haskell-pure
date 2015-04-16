@@ -40,8 +40,8 @@ while b stmts = ifM b (stmts >> while b stmts) (return ())
 yield :: Monad m => FutRef -> C m ()
 yield f = C $ \ c -> Await f (c ())
 
-stop :: Monad m => C m Ref -> C m Ref -- val is a ref
-stop cv = cv >>= \ v -> C $ \ c -> Stop v
+return_ :: Monad m => C m Ref -> C m Ref -- val is a ref
+return_ cv = cv >>= \ v -> C $ \ c -> Return_ v
 
 -- Expressions (left-hand side LHS only)
 ----------------------------------------
@@ -65,7 +65,7 @@ getFuture cf = cf >>= \ f -> C $ \ c -> Get f (do
 
 -- The scheduler loop
 ---------------------
-sched :: [(ObjRef, [Process])] -> SharedState ()
+sched :: [(ObjRef, [Process])] -> S ()
 sched [] = return ()
 sched ((_, []): os) = sched os -- an object's queue is done
 sched ((o, ((a, rf):ps)):os) = case a of
@@ -87,10 +87,10 @@ sched ((o, ((a, rf):ps)):os) = case a of
       case v of
         Nothing -> sched $ os ++ [(o,(a, rf):ps)] -- move to next process, but block this object on this process only (busy-wait for this object)
         Just _ -> do a' <- am; sched $ (o, (a', rf):ps):os -- result is available, continue immediately to its rest continuation
-    Stop v -> do -- method-process returned
+    Return_ v -> do -- method-process returned
       S.modify (\ (c, Heap oh fh) -> (c, Heap oh (M.insert rf (Just v) fh))) -- update the future in the heap
       sched (os ++ [(o, ps)])   -- continue
-    Done -> if o == 0 
+    Stop -> if o == 0 
            then sched (os ++ [(o, ps)]) -- main *process* exited, not main object 
            else error "Compilation error, return must be the last statement" -- if this == 0 (main) then ok else error
     where

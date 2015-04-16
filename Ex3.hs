@@ -28,6 +28,6 @@ m1 this = do
   writeAttr this "z" newObject
   while (readAttr this "z" === readAttr this "z") $ do
        skip
-  stop (readAttr this "z")
+  return_ (readAttr this "z")
 
 {- passes, diverges, as it should -}
