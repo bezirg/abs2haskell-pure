@@ -1,5 +1,5 @@
 name: abs2haskell-pure
-version: 0.0.2
+version: 0.0.3
 synopsis:
 description:
 author: Nikolaos Bezirgiannis, Enrique Martin, Frank de Boer
@@ -11,7 +11,7 @@ cabal-version: >= 1.8
 Source-repository this
   type:     git
   location: git://github.com/bezirg/abs2haskell-pure.git
-  branch: master
+  branch: ast
 
 library
   build-depends:      base,
@@ -20,4 +20,5 @@ library
                       MissingH
   exposed-modules:
                       Base,
-                      ABS                                                            
+                      Eval,
+                      Sched                                                            

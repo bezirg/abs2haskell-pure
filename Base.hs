@@ -1,65 +1,58 @@
 module Base where
 
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.State (State)
-import qualified Data.Map as M (Map)
+import Data.Map (Map)
 
-data Heap = Heap ObjHeap FutHeap -- newtype to remove type-synonym cycle
-          deriving Show
-
-type FutHeap = M.Map FutRef (Maybe Ref)
-type ObjHeap = M.Map ObjRef Attrs
-type Attrs = M.Map String Ref -- attr is a string, this is a mapping from string to vals
-
-type S = State (Counter, -- increasing counter to generate unique new pointer-references from
-                Heap)    -- heap of objects vals and futures vals with references
-
-type Counter = Int              -- a counter to pick unique references for newly-created objects and references
-
-type Ref = Int                  -- our values are refs, ObjRefs or FutRefs, assume well-typed
-type FutRef = Ref
+-- Our language's values are Ints (unique references)
+type Ref = Int                  -- our values are refs: ObjRefs or FutRefs, assume well-typed
 type ObjRef = Ref
+type FutRef = Ref
+type Counter = Ref              -- a counter to pick unique references for newly-crea
 
-type Process = (Action S, -- action/continuation
-                FutRef)             -- returns-to-future
+-- | the Heap is just a pair (newtype so we can override its Show instance)
+data Heap = Heap { objects :: Objects
+                 , futures :: Futures
+                 , newRef :: Ref
+                 }
 
--- our program's actions (effects) are parameterized by m (the underlying monad where actions are ran in).
--- this is a recursive type, because when actions are ran, they return some new action.
-data Action m = Atom 
-                   (m (Action m)) -- the simplest action that lifts an action of the underlying monad.
-              | Async 
-                   ObjRef       -- the callee
-                   (Action m)   -- the method (function that contains action(s)) to call
-                   (Action m)   -- caller continues with this action after the call
-                   FutRef       -- the created future 
-              | Await 
-                   FutRef       -- on which future
-                   (Action m)   -- how to continue
-              | Get 
-                   FutRef       -- on which future
-                   (m (Action m)) -- where to store it
-              | Return_ Ref          -- return this value
-              | Stop              -- empty (finished) process (no continuation included)
+type Objects = Map ObjRef Attrs -- object => FieldTable
+type Futures = Map FutRef (Maybe Ref)
+type Attrs = Map String Ref -- field is a string
 
--- the ContT monad transformer
-newtype C m a = C {unC :: (a -> Action m) -> Action m }
+-- Continuations 
+type Cont = () -> Stmt
 
--- cont must be a monad
-instance Monad m => Monad (C m) where
-    (C f) >>= k = C $ \c -> f (\a -> (unC (k a)) c)
-    return x = C $ \c -> c x
+-- | a process is a triple of this,destiny,(resumable) continuation
+type Proc = (ObjRef, FutRef, Cont)
 
--- is a monad transformer my lifting it
-instance MonadTrans C where
-    lift = atom
+-- | a method is function that takes
+type Method = [Ref]             -- a list of passed (deref) parameters
+            -> ObjRef            -- this obj
+            -> Maybe String      -- in case of sync call: a writeback attribute to write the return result to
+            -> Cont              -- the continuation after the method is finished
+            -> Stmt
+-- OUR AST
 
-type CS = C S
+-- | a single line terminated by ';'
+data Stmt = Assign String Rhs Cont
+          | Await String Cont
+          | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont
+          | While BExp (Cont -> Stmt) Cont
+          | Skip Cont
+          | Return String (Maybe String) Cont
+          | Stop
 
--- Prims
-atom :: Monad m => m a -> C m a
-atom m = C $ \ c -> Atom (do a <- m ; return (c a))
+-- | the RHS of assignment
+data Rhs = New
+         | Get String
+         | Async String Method [String]
+         | Sync Method [String]
+         | Param Ref         -- this lets you put method parameters to fields and use them later
+         | Attr String
+         -- we do not need This, because it is passed as a local parameter on each method
 
-action :: Monad m => C m a -> Action m
-action (C m) = m (\ a -> Stop) -- tying up the knot
-
+-- | pointer equality of fields
+data BExp = BCon BExp BExp
+          | BDis BExp BExp
+          | BNeg BExp
+          | BEq String String
 
