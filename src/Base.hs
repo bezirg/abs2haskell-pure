@@ -22,14 +22,17 @@ type Attrs = Map String Ref -- field is a string
 type Cont = () -> Stmt
 
 -- | a process is a triple of this,destiny,(resumable) continuation
-type Proc = (ObjRef, FutRef, Cont)
+newtype Proc = Proc {fromProc :: (ObjRef, FutRef, Cont)}
+
+-- The scheduler's runtime process table
+type ProcTable = Map ObjRef [Proc]
 
 -- | a method is function that takes
-type Method = [Ref]             -- a list of passed (deref) parameters
-            -> ObjRef            -- this obj
-            -> Maybe String      -- in case of sync call: a writeback attribute to write the return result to
-            -> Cont              -- the continuation after the method is finished
-            -> Stmt
+type Method = [Ref]             -- ^ a list of passed (deref) parameters
+            -> ObjRef            -- ^ this obj
+            -> Maybe String      -- ^ in case of sync call: a writeback attribute to write the return result to
+            -> Cont              -- ^ the continuation after the method is finished
+            -> Cont              -- ^ the created method's continuation that will start executing when applied to ()
 -- OUR AST
 
 -- | a single line terminated by ';'

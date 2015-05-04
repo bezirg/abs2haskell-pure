@@ -1,7 +1,7 @@
 name: abs2haskell-pure
-version: 0.0.3
-synopsis:
-description:
+version: 0.0.4
+synopsis: A "pure" implementation of an ABS-subset for analysis purposes
+description: A "pure" implementation of an ABS-subset for analysis purposes
 author: Nikolaos Bezirgiannis, Enrique Martin, Frank de Boer
 maintainer: Nikolaos Bezirgiannis <bezirgia@cwi.nl>
 stability: provisional
@@ -15,10 +15,21 @@ Source-repository this
 
 library
   build-depends:      base,
-                      transformers,
                       containers,
-                      MissingH
+                      random
   exposed-modules:
+                      -- the ABS' AST and the ABS-runtime data-structures
                       Base,
+                      -- a single-step evaluator/interpreter of ABS terms (from AST)
                       Eval,
-                      Sched                                                            
+                      -- the global scheduler that schedules COGs (single-objects in our case)
+                      -- simulates non-determinism by pseudo-randomness
+                      Sched,
+                      -- for debugging: Show-instances of heaps and processes 
+                      PP,
+                      -- a wrapper module that exposes all of the above modules
+                      ABS
+  hs-source-dirs:     src
+  extensions:         LambdaCase
+  ghc-options:        -Wall
+                                                                                        
