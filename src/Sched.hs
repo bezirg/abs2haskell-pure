@@ -1,4 +1,8 @@
-module Sched where
+-- | The global scheduler that schedules COGs (single-objects in our case)
+-- We simulate non-determinism by pseudo-randomness
+module Sched (
+              run, runFixed, runIO, sched, step
+             ) where
 
 import Base
 import Eval
@@ -7,17 +11,17 @@ import System.Random
 import qualified Data.Map as M
 import Debug.Trace
 
--- | just initializes a "true" stdgen from the hardware clock
+-- | Wrapper to 'run' using a "true" stdgen from the hardware clock
 runIO :: Int -> Method -> IO Heap
 runIO n mainMethod = do
   g <- getStdGen
   return (run n mainMethod g)
 
--- | runs with a fixed (default) stdgen
+-- | Wrapper to 'run' using a default (fixed) stdgen
 runFixed :: Int -> Method -> Heap
 runFixed n mainMethod = run n mainMethod (mkStdGen maxBound)
 
--- | given a number of iterations and an entrypoint (ABS main-method) , 
+-- | Given a number of iterations and an entrypoint (ABS main-method) , 
 -- it executes the program only for that many iterations returning the final heap.
 run :: Int -> Method -> StdGen -> Heap
 run iters mainMethod g = let
@@ -34,14 +38,22 @@ run iters mainMethod g = let
     in sched iters (initHeap,initProcTable,g)
                       
 
-sched :: Int -> (Heap,ProcTable,StdGen) -> Heap
+-- | The sched is just a looper of the step function
+sched :: Int                     -- ^ the max iterations to run
+      -> (Heap,ProcTable,StdGen) -- ^ an initial program configuration
+      -> Heap                    -- ^ the final heap
 sched n (h,pt,g) | n < 0 = error "iterations must be positive"
                  | n == 0 = trace ("reached max steps\nLast ProcTable: " ++ show pt) h
                  | otherwise = case step (h,pt,g) of
                                  Nothing -> trace ("finished (empty proctable), " ++ show n ++ "steps left") h
                                  Just conf' -> sched (n-1) conf'
 
-step :: (Heap,ProcTable,StdGen)  -- ^ a kind of configuration
+-- | The step is the main workforce. Given a current configuration,
+-- it randomly picks up a next object to execute,
+-- then pops out its first process, 'eval'uates the 1st statement of that process and returns 
+-- either a modified next configuration or 'Nothing' to signal that there was no object left to execute (program finished successfully).
+-- Note: Favourably, the step should check if there is no _active_ object left (program finished or program deadlocked).
+step :: (Heap,ProcTable,StdGen)  -- ^ current configuration
      -> Maybe (Heap,ProcTable,StdGen)  -- ^ new configuration
 step (h,pt,g) | M.size pt == 0 = Nothing
               | otherwise = let

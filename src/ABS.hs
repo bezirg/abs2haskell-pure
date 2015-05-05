@@ -1,3 +1,4 @@
+-- | Wrapper module that reexports submodules
 module ABS (
             module Base
            ,module Eval

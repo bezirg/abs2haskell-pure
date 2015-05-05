@@ -1,3 +1,4 @@
+-- | for debugging: Show-instances of heaps and processes 
 module PP where
 
 import Base

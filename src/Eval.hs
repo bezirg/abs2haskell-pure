@@ -1,16 +1,17 @@
+-- | Contains the single-step evaluator/interpreter of ABS terms (from AST)
 module Eval where
 
 import Base
 import qualified Data.Map as M
 
--- | eval takes a process and a heap and executes the 1st only statement of that process
+-- | eval takes a process and a heap and executes the 1st only statement of that process.
 -- Returns the executed statement, maybe the rest continuation of this process, maybe a brand-new process (from async) and a new heap.
 eval :: Proc                     -- ^ a process to execute
      -> Heap                     -- ^ inside a heap
-     -> (Stmt                    -- ^ the 1st only statement of this process that has been fully executed
-       ,Maybe Cont              -- ^ maybe a continuation (after the stmt) of the same process to be put back to the proctable
-       ,Maybe Proc              -- ^ maybe a brand-new extra process (resulting from an async call)
-       , Heap)                  -- ^ the new heap after the execution of the stmt
+     -> (Stmt                    -- the 1st only statement of this process that has been fully executed
+       ,Maybe Cont              -- maybe a continuation (after the stmt) of the same process to be put back to the proctable
+       ,Maybe Proc              -- maybe a brand-new extra process (resulting from an async call)
+       , Heap)                  -- the new heap after the execution of the stmt
 eval (Proc (this, destiny, c)) h = let res = c ()
                             in case res of
   Stop -> (res, Nothing, Nothing, h)
@@ -103,11 +104,11 @@ beval (BDis exp1 exp2) this s = beval exp1 this s || beval exp2 this s
 beval (BNeg exp1) this s = not (beval exp1 this s)
 beval (BEq attr1 attr2) this s = readAttr attr1 this s == readAttr attr2 this s
 
--- | Utility function
-readAttr :: String
-         -> ObjRef               -- this
-         -> Heap
-         -> Ref
+-- | Utility function to read an attribute from an object (this)
+readAttr :: String               -- ^ the name of the attribute
+         -> ObjRef               -- ^ the this object
+         -> Heap                 -- ^ the current heap
+         -> Ref                  -- ^ its value
 readAttr attr this h = case M.lookup this (objects h) of
                     Nothing -> error "\"this\" was not found: developer error"
                     Just as -> case M.lookup attr as of
