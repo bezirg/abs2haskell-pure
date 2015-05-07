@@ -14,7 +14,6 @@ eval :: Proc                     -- ^ a process to execute
        , Heap)                  -- the new heap after the execution of the stmt
 eval (Proc (this, destiny, c)) h = let res = c ()
                             in case res of
-  Stop -> (res, Nothing, Nothing, h)
   Skip k' -> (res, Just k', Nothing, h)
   Return attr wb k' -> case wb of
                         -- sync call
@@ -24,7 +23,9 @@ eval (Proc (this, destiny, c)) h = let res = c ()
                                         attrEntry = M.singleton lhs (readAttr attr this h)
                                         objects' = M.insertWith M.union this attrEntry (objects h)
                                      in h {objects = objects'})
-                        Nothing -> (res, Nothing
+                        -- async call
+                        Nothing -> (res, 
+                                   Nothing
                                   ,Nothing
                                   , case M.lookup destiny (futures h) of
                                       -- unresolved future
@@ -78,7 +79,7 @@ eval (Proc (this, destiny, c)) h = let res = c ()
                     (map (\ a -> readAttr a this h) attrs) -- read the passed attrs
                     (readAttr obj this h) -- read the callee object
                     Nothing -- no writeback
-                    (\ _ -> Stop) -- tying up the knot: nothing left to execute after the process is finished
+                    (\ _ -> error "this async method did not call return") -- tying up the knot: nothing left to execute after the process is finished
           newProc = Proc (readAttr obj this h, newRef h, newCont)
           futures' = M.insert (newRef h) Nothing (futures h) -- create a new unresolved future
           attrEntry = M.singleton lhs (newRef h)

@@ -35,15 +35,15 @@ m1 [] this wb k = \ () ->
 
 
 main :: IO ()
-main = runIO 10000 main_ >>= print
+main = print (run 10000 main_)
 
 {- passes, diverges, as it should
 reached max steps
+Last ProcTable: fromList [(0,fromList [(0,1,"<fun>")]),(2,fromList [(2,3,"<fun>")])]
 Heap: {
-Objects: fromList [(0,fromList [("f",3),("x",2)]),(2,fromList [("z",4)]),(4,fromList [])]
+Objects: fromList [(0,fromList [("__main__",-123),("f",3),("x",2)]),(2,fromList [("z",4)]),(4,fromList [])]
 Fut: fromList [(1,Nothing),(3,Nothing)]
 Counter: 5}
-it :: ()
  -}
 
 

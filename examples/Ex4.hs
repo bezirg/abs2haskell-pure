@@ -46,14 +46,12 @@ m2 [p1] this wb k = \ () ->
                                 Return "k" wb k
 
 main :: IO ()
-main = runIO 50 main_ >>= print
+main = print (run 50 main_)
 
 {- passes, output
-Counter: 5
-
-ObjectHeap: (fromList [(0,fromList [("f1",2),("f2",3),("x",1),("y",4)]),(1,fromList [("k",4),("r1",4),("z",4)]),(4,fromList [])]) 
-
-FutureHeap: (fromList [(2,Just 4),(3,Just 4)])
-
-ThisObject,0)
+finished (empty proctable), 32steps left
+Heap: {
+Objects: fromList [(0,fromList [("__main__",-123),("f1",3),("f2",4),("x",2),("y",5)]),(2,fromList [("k",5),("p1_",3),("r1",5),("z",5)]),(5,fromList [])]
+Fut: fromList [(1,Just (-123)),(3,Just 5),(4,Just 5)]
+Counter: 6}
  -}

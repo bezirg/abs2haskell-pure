@@ -28,12 +28,12 @@ m1 [] this wb k = \ () ->
       Return "z" wb k
 
 main :: IO ()
-main = runIO 10 main_ >>= print
+main = print (run 10 main_)
 
 {- passes, output
 finished (empty proctable), 2steps left
 Heap: {
-Objects: fromList [(0,fromList [("f",3),("x",2),("y",4)]),(2,fromList [("z",4)]),(4,fromList [])]
-Fut: fromList [(1,Nothing),(3,Just 4)]
+Objects: fromList [(0,fromList [("__main__",-123),("f",3),("x",2),("y",4)]),(2,fromList [("z",4)]),(4,fromList [])]
+Fut: fromList [(1,Just (-123)),(3,Just 4)]
 Counter: 5}
 -}

@@ -2,6 +2,7 @@
 module Base where
 
 import Data.Map (Map)
+import Data.Sequence (Seq)
 
 -- * The values of our language
 
@@ -52,8 +53,8 @@ type Cont = () -> Stmt
 newtype Proc = Proc {fromProc :: (ObjRef, FutRef, Cont)}
 
 -- | The (global) scheduler's runtime Process Table.
--- It is a mapping _from_ an object-reference _to_ its queue of processes
-type ProcTable = Map ObjRef [Proc]
+-- It is a round-robin queue _from_ an object-reference _to_ a double-ended queue of processes beloning to that object
+type ProcTable = Seq (ObjRef, Seq Proc)
 
 -- * Our language's AST and types
 
@@ -65,7 +66,6 @@ data Stmt = Assign String Rhs Cont -- ^ "attr" := Rhs; cont...
           | While BExp (Cont -> Stmt) Cont            -- ^ while pred BodyClause; cont...
           | Skip Cont                                -- ^ skip; cont...
           | Return String (Maybe String) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
-          | Stop                                     -- ^ is not used explictly by any ABS-program; it is used by the runtime to signal the end of a chain of statements; thus, it does not take a continuation as an argument.
 
 -- | the RHS of an assignment
 data Rhs = New
@@ -91,4 +91,5 @@ type Method = [Ref]             -- ^ a list of passed (deref) parameters
             -> Maybe String      -- ^ in case of sync call: a writeback attribute to write the return result to
             -> Cont              -- ^ the continuation after the method is finished
             -> Cont              -- ^ the resulting method's continuation that will start executing when applied to ()
+
 
