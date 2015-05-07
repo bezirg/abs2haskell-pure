@@ -34,7 +34,7 @@ data Heap = Heap { objects :: Objects -- ^ the live objects
                  }
 
 -- | The objects of the heap is a table _from_ an object's 'Ref'erence _to_ another table of the object's attributes: 'Attrs'
-type Objects = Map ObjRef Attrs
+type Objects = Map ObjRef (Attrs, Seq Proc)
 
 -- | The attributes is a table _from_ the attribute name ('String') _to_ its value ('Ref')
 type Attrs = Map String Ref
@@ -50,11 +50,11 @@ type Cont = () -> Stmt
 
 -- | Each process is a triple of the this object, its destiny, and its (resumable) continuation
 -- (note: is a newtype just for overriding its Show instance, check module "PP")
-newtype Proc = Proc {fromProc :: (ObjRef, FutRef, Cont)}
+newtype Proc = Proc {fromProc :: (FutRef, Cont)}
 
 -- | The (global) scheduler's runtime Process Table.
 -- It is a round-robin queue _from_ an object-reference _to_ a double-ended queue of processes beloning to that object
-type ProcTable = Seq (ObjRef, Seq Proc)
+type SchedQueue = Seq ObjRef
 
 -- * Our language's AST and types
 

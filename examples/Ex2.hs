@@ -31,9 +31,10 @@ main :: IO ()
 main = print (run 10 main_)
 
 {- passes, output
-finished (empty proctable), 2steps left
+finished (empty schedtable), 3steps left
 Heap: {
-Objects: fromList [(0,fromList [("__main__",-123),("f",3),("x",2),("y",4)]),(2,fromList [("z",4)]),(4,fromList [])]
+Objects: fromList [(0,(fromList [("__main__",-123),("f",3),("x",2),("y",4)],fromList [])),(2,(fromList [("z",4)],fromList [])),(4,(fromList [],fromList []))]
 Fut: fromList [(1,Just (-123)),(3,Just 4)]
 Counter: 5}
+it :: ()
 -}

@@ -49,9 +49,9 @@ main :: IO ()
 main = print (run 50 main_)
 
 {- passes, output
-finished (empty proctable), 32steps left
+finished (empty schedtable), 33steps left
 Heap: {
-Objects: fromList [(0,fromList [("__main__",-123),("f1",3),("f2",4),("x",2),("y",5)]),(2,fromList [("k",5),("p1_",3),("r1",5),("z",5)]),(5,fromList [])]
-Fut: fromList [(1,Just (-123)),(3,Just 5),(4,Just 5)]
+Objects: fromList [(0,(fromList [("__main__",-123),("f1",3),("f2",5),("x",2),("y",4)],fromList [])),(2,(fromList [("k",4),("p1_",3),("r1",4),("z",4)],fromList [])),(4,(fromList [],fromList []))]
+Fut: fromList [(1,Just (-123)),(3,Just 4),(5,Just 4)]
 Counter: 6}
  -}

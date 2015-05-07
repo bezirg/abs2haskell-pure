@@ -9,4 +9,4 @@ instance Show Heap where
                         ++ "Counter: " ++ show c ++ "}"
                         
 instance Show Proc where
-    show (Proc (this,destiny,_cont)) = show (this,destiny,"<fun>")
+    show (Proc (destiny,_cont)) = show (destiny,"<fun>")
