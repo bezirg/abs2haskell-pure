@@ -40,7 +40,7 @@ m2 [] this wb k = \ () ->
                       Return "z" wb k
 
 main :: IO ()
-main = print (run 11 main_)
+main = print =<< run 11 main_
 
 
 {- passes, output

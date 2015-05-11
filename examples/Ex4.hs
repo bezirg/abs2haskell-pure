@@ -46,7 +46,7 @@ m2 [p1] this wb k = \ () ->
                                 Return "k" wb k
 
 main :: IO ()
-main = print (run 50 main_)
+main = print =<< run 50 main_
 
 {- passes, output
 finished (empty schedtable), 33steps left

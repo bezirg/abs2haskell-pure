@@ -28,7 +28,7 @@ m1 [] this wb k = \ () ->
       Return "z" wb k
 
 main :: IO ()
-main = print (run 10 main_)
+main = print =<< run 10 main_
 
 {- passes, output
 finished (empty schedtable), 3steps left

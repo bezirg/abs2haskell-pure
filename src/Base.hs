@@ -3,6 +3,7 @@ module Base where
 
 import Data.Map (Map)
 import Data.Sequence (Seq)
+import Data.Vector.Mutable (IOVector) 
 
 -- * The values of our language
 
@@ -42,7 +43,7 @@ type Attrs = Map String Ref
 -- | The futures of the heap is a table _of_ future's 'Ref'erences _to_ their potential final values.
 -- A future is empty ('Nothing') until it is resolved (filled with 'Just value'), hence its type 'Maybe Ref'.
 -- A future reference must be 'final', and this must be guaranteed by the runtime system.
-type Futures = Map FutRef (Maybe Ref)
+type Futures = IOVector (Maybe Ref)
 
 -- | We have a single (universal) type for our continuations. 
 -- Later, if we introduce local-variables we are going to need an extra type for Continuations: 'Ref -> Stmt'

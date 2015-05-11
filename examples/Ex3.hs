@@ -35,7 +35,7 @@ m1 [] this wb k = \ () ->
 
 
 main :: IO ()
-main = print (run 10000 main_)
+main = print =<< run 10000 main_
 
 {- passes, diverges, as it should
 reached max steps

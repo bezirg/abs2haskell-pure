@@ -16,7 +16,7 @@ main_ [] this wb k = \ () ->
                          Assign "x" New $ \ () ->
                              Assign "y" (Attr "x") k
 main :: IO ()
-main = print (run 10 main_)
+main = print =<< run 10 main_
 
 {- passes, output
 finished (empty schedtable), 6steps left
