@@ -15,20 +15,23 @@ eval :: ObjRef                     -- ^ the object to execute
      -> IO (Stmt                    -- the 1st only statement of this process that has been fully executed
        ,[ObjRef]                -- the number of objects that have to be appended to the scheduler's queue 
        , Heap)                  -- the new heap after the execution of the stmt
-eval this h = case M.lookup this $ objects h of
-  Nothing -> error "this should not happen: object not found"
-  Just (attrs, pqueue) -> case S.viewl pqueue of
+eval this h = do
+  (attrs,pqueue) <- objects h `V.read` this
+  case S.viewl pqueue of
      S.EmptyL -> error "this should not happen: scheduled an empty-proc object"
      (Proc (destiny, c)) S.:< restProcs -> let res = c ()
-                                                in case res of
-        Skip k' -> return (res, [this], h { objects = updateObj attrs $ Left k'})
+                                          in case res of
+        Skip k' -> do
+                updateObj attrs $ Left k'
+                return (res, [this], h)
         Return attr wb k' -> case wb of
                         -- sync call
-                        Just lhs -> return (res,
+                        Just lhs -> do
+                          let attrs' = M.insert lhs (readAttr attr) attrs
+                          updateObj attrs' $ Left k'
+                          return (res,
                                    [this],
-                                   let 
-                                        attrs' = M.insert lhs (readAttr attr) attrs
-                                   in h { objects = updateObj attrs' $ Left k'}
+                                   h
                                    )
                         -- async call
                         Nothing -> do
@@ -36,62 +39,74 @@ eval this h = case M.lookup this $ objects h of
                            when (isJust fut) $ error "tried to return to an already resolved future"
                            -- unresolved future
                            (futures h `V.write` destiny) (Just $ readAttr attr)
+                           (objects h `V.write` this) (attrs, restProcs)
                            return (res, 
                                    [this | not $ S.null restProcs],
-                                   (h { objects = M.insert this (attrs, restProcs) $ objects h
-                                      }))
-        If bexp t e k' -> return (res, 
+                                   (h))
+        If bexp t e k' -> do
+                        updateObj attrs $ Left $ if beval bexp
+                                                 then \ () -> t k'
+                                                 else \ () -> e k'
+                        return (res, 
                           [this],
-                          h {objects = updateObj attrs $ Left $ if beval bexp
-                                                               then \ () -> t k'
-                                                               else \ () -> e k'})
-        While bexp s k' -> return (res,
-                          [this],
-                           h {objects = updateObj attrs $ Left $ if beval bexp
-                                                                 then \ () -> While bexp s k'
-                                                                 else k'})
+                          h)
+        While bexp s k' -> do
+                        updateObj attrs $ Left $ if beval bexp
+                                                 then \ () -> While bexp s k'
+                                                 else k'
+                        return (res,
+                                [this],
+                                h)
         Await attr k' -> do
           fut <- futures h `V.read` readAttr attr
-          return $ case fut of
+          case fut of
             -- unresolved future
-            Nothing -> (res, 
-                            [this],
-                            h { objects = updateObj attrs $ Right $ \ () -> Await attr k'}) -- loop with await remaining
+            Nothing -> do
+                     updateObj attrs $ Right $ \ () -> Await attr k' -- loop with await remaining
+                     return (res, 
+                             [this],
+                             h) 
             -- already-resolved future
-            Just _ -> (res, 
-                              [this],
-                              h { objects = updateObj attrs $ Left k'})
-        Assign lhs New k' -> let 
-            attrs' = M.insert lhs (newRef h) attrs
-            objects' = updateObj attrs' $ Left k'
-            objects'' = M.insert (newRef h) (M.empty,S.empty) objects'
-            in return (res,
-                [this],
-                h { objects = objects''
-                  , newRef = newRef h + 1})
+            Just _ -> do
+                     updateObj attrs $ Left k'
+                     return (res, 
+                             [this],
+                              h)
+        Assign lhs New k' -> do
+                        let attrs' = M.insert lhs (newRef h) attrs
+                        updateObj attrs' $ Left k'
+                        (objects h `V.write` newRef h) (M.empty,S.empty) 
+                        return (res,
+                                [this],
+                                h {newRef = newRef h + 1})
         Assign lhs (Get f) k' -> do
           fut <- futures h `V.read` readAttr f
-          return $ case fut of
-                     -- unresolved future
-                     Nothing -> (res, 
-                                [this],
-                                h { objects = updateObj attrs $ Left $ \ () -> Assign lhs (Get f) k' })
+          case fut of
+            -- unresolved future
+            Nothing -> do
+                     updateObj attrs $ Left $ \ () -> Assign lhs (Get f) k' 
+                     return (res, 
+                             [this],
+                             h)
                      -- already-resolved future
-                     Just v -> let -- it's the same as -- Assign lhs (Param v) h k
-                                attrs' = M.insert lhs v attrs
-                              in (res,
-                                  [this],
-                                  h { objects = updateObj attrs' $ Left k' })
-        Assign lhs (Sync m params) k' -> return (res, 
-                                        [this],
-                                        h { objects = updateObj attrs $ Left (m 
-                                          (map readAttr params) -- read the passed attrs
-                                          this
-                                          (Just lhs)
-                                          k')})
+            Just v -> do
+                     let attrs' = M.insert lhs v attrs
+                     updateObj attrs' $ Left k'
+                     return (res,
+                             [this],
+                             h)
+        Assign lhs (Sync m params) k' -> do
+                        updateObj attrs $ Left (m 
+                                                (map readAttr params) -- read the passed attrs
+                                                this
+                                                (Just lhs)
+                                                k')
+                        return (res, 
+                                [this],
+                                h) 
         Assign lhs (Async obj m params) k' -> do
             let calleeObj = readAttr obj -- read the callee object
-            let (calleeAttrs, calleeProcQueue) = maybe (error "this should not happen: callee object not found") id $ M.lookup calleeObj (objects h)
+            (calleeAttrs, calleeProcQueue) <- (objects h `V.read` calleeObj)
             let newCont = m 
                           (map readAttr params) -- read the passed attrs
                           calleeObj
@@ -99,28 +114,29 @@ eval this h = case M.lookup this $ objects h of
                           (\ _ -> error "this async method did not call return") -- tying up the knot: nothing left to execute after the process is finished
             let newProc = Proc (newRef h, newCont)
             let attrs' = M.insert lhs (newRef h) attrs
-            let objects' = updateObj attrs' (Left k')
-            let objects'' = M.insert calleeObj (calleeAttrs, calleeProcQueue S.|> newProc)  objects'
+            updateObj attrs' (Left k')
+            (objects h `V.write` calleeObj) (calleeAttrs, calleeProcQueue S.|> newProc)
             (futures h `V.write` newRef h) Nothing  -- create a new unresolved future
             return (res,
-                (if S.null calleeProcQueue then (calleeObj:) else id) [this]
-               ,h { objects = objects''
-                  , newRef = newRef h + 1})
-        Assign lhs (Param r) k' -> let 
-            attrs' = M.insert lhs r attrs
-            in return (res, 
-                [this],
-                h { objects = updateObj attrs' (Left k')})
-        Assign lhs (Attr a) k' -> let 
-            attrs' = M.insert lhs (readAttr a) attrs
-            in return (res,
-                [this], 
-                h { objects = updateObj attrs' (Left k')})
+                    (if S.null calleeProcQueue then (calleeObj:) else id) [this]
+                   ,h {newRef = newRef h + 1})
+        Assign lhs (Param r) k' -> do
+                        let  attrs' = M.insert lhs r attrs
+                        updateObj attrs' (Left k')
+                        return (res, 
+                                [this],
+                                h)
+        Assign lhs (Attr a) k' -> do
+                        let attrs' = M.insert lhs (readAttr a) attrs
+                        updateObj attrs' (Left k')
+                        return (res,
+                                [this], 
+                                h)
       where
-        updateObj :: Attrs -> Either Cont Cont -> Objects
-        updateObj as' ek = M.insert this (as', case ek of
-                                                 Left k -> Proc (destiny, k) S.<| restProcs
-                                                 Right k -> restProcs S.|> Proc (destiny, k)) (objects h)
+        updateObj :: Attrs -> Either Cont Cont -> IO ()
+        updateObj as' ek = (objects h `V.write` this) (as', case ek of
+                                                              Left k -> Proc (destiny, k) S.<| restProcs
+                                                              Right k -> restProcs S.|> Proc (destiny, k)) 
                                                                           
         -- | Evaluates a predicate BExp from the AST to a Haskell's Bool
         beval :: BExp -> Bool
@@ -132,8 +148,6 @@ eval this h = case M.lookup this $ objects h of
         -- | Utility function to read an attribute from an object (this)
         readAttr :: String               -- ^ the name of the attribute
                  -> Ref                  -- ^ its value
-        readAttr attr = case M.lookup this (objects h) of
-                    Nothing -> error "\"this\" was not found: developer error"
-                    Just (as,_) -> case M.lookup attr as of
+        readAttr attr = case M.lookup attr attrs of
                                 Nothing -> error ("this = " ++ show this ++ ", attr = " ++ attr ++ " not found")
                                 Just v -> v

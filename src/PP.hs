@@ -4,7 +4,7 @@ module PP where
 import Base
 
 instance Show Heap where
-    show (Heap os fs c) = "Heap: {\nObjects: " ++ show os ++ "\n" 
+    show (Heap os fs c) = "Heap: {\nObjects: " -- ++ show os ++ "\n" 
                         -- ++ "Fut: "++ show fs ++ "\n"
                         ++ "Counter: " ++ show c ++ "}"
                         

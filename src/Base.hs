@@ -35,7 +35,7 @@ data Heap = Heap { objects :: Objects -- ^ the live objects
                  }
 
 -- | The objects of the heap is a table _from_ an object's 'Ref'erence _to_ another table of the object's attributes: 'Attrs'
-type Objects = Map ObjRef (Attrs, Seq Proc)
+type Objects = IOVector (Attrs, Seq Proc)
 
 -- | The attributes is a table _from_ the attribute name ('String') _to_ its value ('Ref')
 type Attrs = Map String Ref

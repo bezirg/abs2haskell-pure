@@ -18,14 +18,17 @@ run :: Int -> Method -> IO Heap
 run iters mainMethod = do
     let mainObjRef = 0 -- "main" object (0 ref by default)
     let mainFutRef = mainObjRef + 1 -- main-method's destiny (1 ref by default)
-    initFutVec <- V.new 1000
-    (initFutVec `V.write` mainFutRef) Nothing
-    let initHeap = Heap { objects = M.singleton mainObjRef (M.singleton "__main__" (-123), S.singleton $ Proc (mainFutRef
-                                                                                                          -- async call to main method
-                                                                                                          ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
-                                                                                                          ))
-                    , futures = initFutVec
-                    , newRef = mainFutRef+1}
+    initObjVec <- V.new 1000         -- the initial object vector (starting size: 1000)
+    -- put the main object
+    (initObjVec `V.write` mainObjRef) (M.singleton "__main__" (-123), S.singleton $ Proc (mainFutRef
+                                                                                         -- async call to main method
+                                                                                         ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
+                                                                                         ))
+    initFutVec <- V.new 1000     -- the initial future vector (starting size: 1000)
+    (initFutVec `V.write` mainFutRef) Nothing -- putting the main destiny
+    let initHeap = Heap { objects = initObjVec
+                        , futures = initFutVec
+                        , newRef = mainFutRef+1}
     let initSchedQueue = S.singleton mainObjRef
     sched iters (initHeap,initSchedQueue)
     where
