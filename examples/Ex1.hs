@@ -10,11 +10,13 @@ main = {
 }
 -}
 
+(t:x:y:_) = [1..]
+
 main_ :: Method
 main_ [] this wb k = \ () -> 
-                     Assign "t" (Param this) $ \ () ->
-                         Assign "x" New $ \ () ->
-                             Assign "y" (Attr "x") k
+                     Assign t (Param this) $ \ () ->
+                         Assign x New $ \ () ->
+                             Assign y (Attr x) k
 main :: IO ()
 main = print =<< run 10 main_
 

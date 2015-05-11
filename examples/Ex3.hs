@@ -19,19 +19,21 @@ m1 = {
 
 -}
 
+(x:f:y:z:_) = [1..]
+
 main_ :: Method
 main_ [] this wb k = \ () ->
-                     Assign  "x" New $ \ () ->
-                         Assign "f" (Async "x" m1 []) $ \ () ->
-                             Assign"y" (Get "f") k
+                     Assign  x New $ \ () ->
+                         Assign f (Async x m1 []) $ \ () ->
+                             Assign y (Get f) k
 
 
 m1 :: Method
 m1 [] this wb k = \ () ->
-                  Assign "z" New $ \ () ->
-                      While ("z" `BEq` "z") 
+                  Assign z New $ \ () ->
+                      While (z `BEq` z) 
                                 (\ k' -> Skip k') $ \ () ->
-                                    Return "z" wb k
+                                    Return z wb k
 
 
 main :: IO ()

@@ -7,7 +7,6 @@ module Sched (
 import Base
 import Eval
 import PP ()
-import qualified Data.Map as M
 import Debug.Trace
 import qualified Data.Sequence as S
 import qualified Data.Vector.Mutable as V
@@ -19,11 +18,13 @@ run iters mainMethod = do
     let mainObjRef = 0 -- "main" object (0 ref by default)
     let mainFutRef = mainObjRef + 1 -- main-method's destiny (1 ref by default)
     initObjVec <- V.new 1000         -- the initial object vector (starting size: 1000)
+    initAttrVec <- V.new 100
+    (initAttrVec `V.write` 0) (-123) 
     -- put the main object
-    (initObjVec `V.write` mainObjRef) (M.singleton "__main__" (-123), S.singleton $ Proc (mainFutRef
-                                                                                         -- async call to main method
-                                                                                         ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
-                                                                                         ))
+    (initObjVec `V.write` mainObjRef) (initAttrVec, S.singleton $ Proc (mainFutRef
+                                                                       -- async call to main method
+                                                                       ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
+                                                                       ))
     initFutVec <- V.new 1000     -- the initial future vector (starting size: 1000)
     (initFutVec `V.write` mainFutRef) Nothing -- putting the main destiny
     let initHeap = Heap { objects = initObjVec
@@ -33,7 +34,7 @@ run iters mainMethod = do
     sched iters (initHeap,initSchedQueue)
     where
       last_main :: Stmt
-      last_main = Return "__main__" Nothing (error "call to main: main is a special block")
+      last_main = Return 0 Nothing (error "call to main: main is a special block")
                       
 
 -- | The sched is just a looper of the step function

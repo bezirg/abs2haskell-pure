@@ -18,32 +18,34 @@ m1 = {
 m2 p1 = {
   r1 := p1.get;
   if (z == r1) {
-    k := r1;
+    w := r1;
   }
   else {
-    k := this;
+    w := this;
   }
-  return k;
+  return w;
 -}
+
+(x:f1:f2:y:z:p1_:r1:w:_) = [1..]
 
 main_ :: Method
 main_ [] this wb k = \ () -> 
-                     Assign "x" New $ \ () ->
-                         Assign "f1" (Async "x" m1 []) $ \ () ->
-                             Assign "f2" (Async "x" m2 ["f1"]) $ \ () ->
-                                 Assign "y" (Get "f2") k
+                     Assign x New $ \ () ->
+                         Assign f1 (Async x m1 []) $ \ () ->
+                             Assign f2 (Async x m2 [f1]) $ \ () ->
+                                 Assign y (Get f2) k
 
 m1 :: Method
 m1 [] this wb k = \ () ->
-                  Assign "z" New $ \ () ->
-                      Return "z" wb k
+                  Assign z New $ \ () ->
+                      Return z wb k
 
 m2 :: Method
 m2 [p1] this wb k = \ () ->
-                    Assign "p1_" (Param p1) $ \ () ->                     -- aux attr
-                        Assign "r1" (Get "p1_") $ \ () ->
-                            If ("z" `BEq` "r1") (\ k' -> Assign "k" (Attr "r1") k') (\ k' -> Assign "k" (Param this) k') $ \ () ->
-                                Return "k" wb k
+                    Assign p1_ (Param p1) $ \ () ->                     -- aux attr
+                        Assign r1 (Get p1_) $ \ () ->
+                            If (z `BEq` r1) (\ k' -> Assign w (Attr r1) k') (\ k' -> Assign w (Param this) k') $ \ () ->
+                                Return w wb k
 
 main :: IO ()
 main = print =<< run 50 main_

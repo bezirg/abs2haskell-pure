@@ -1,7 +1,6 @@
 -- | The ABS' AST and the ABS-runtime data-structures
 module Base where
 
-import Data.Map (Map)
 import Data.Sequence (Seq)
 import Data.Vector.Mutable (IOVector) 
 
@@ -38,7 +37,7 @@ data Heap = Heap { objects :: Objects -- ^ the live objects
 type Objects = IOVector (Attrs, Seq Proc)
 
 -- | The attributes is a table _from_ the attribute name ('String') _to_ its value ('Ref')
-type Attrs = Map String Ref
+type Attrs = IOVector Ref
 
 -- | The futures of the heap is a table _of_ future's 'Ref'erences _to_ their potential final values.
 -- A future is empty ('Nothing') until it is resolved (filled with 'Just value'), hence its type 'Maybe Ref'.
@@ -61,25 +60,25 @@ type SchedQueue = Seq ObjRef
 
 -- | An ABS statement.
 -- Statements are "chained" (sequantially composed) by deeply nesting them through 'Cont'inuations.
-data Stmt = Assign String Rhs Cont -- ^ "attr" := Rhs; cont...
-          | Await String Cont      -- ^ await "attr"; cont...
+data Stmt = Assign Int Rhs Cont -- ^ "attr" := Rhs; cont...
+          | Await Int Cont      -- ^ await "attr"; cont...
           | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont -- ^ if pred ThenClause ElseClause; cont... 
           | While BExp (Cont -> Stmt) Cont            -- ^ while pred BodyClause; cont...
           | Skip Cont                                -- ^ skip; cont...
-          | Return String (Maybe String) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
+          | Return Int (Maybe Int) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
 
 -- | the RHS of an assignment
 data Rhs = New
-         | Get String
-         | Async String Method [String]
-         | Sync Method [String]
+         | Get Int
+         | Async Int Method [Int]
+         | Sync Method [Int]
          | Param Ref         -- ^ all commands operate on attributes; to use instead a method's parameter (passed argument or this) you first store it to an (auxiliary) attribute, e.g. Assign "attr" (Param this)
-         | Attr String       -- ^ assign an attribute to the value of another attribute
+         | Attr Int       -- ^ assign an attribute to the value of another attribute
          -- we do not need This, because it is passed as a local parameter on each method
 
 -- | A boolean expression occurs only as a control-flow predicate (if & while) 
 -- It does only reference equality of attributes ('BEq') and combinators on them (conjuction,disjunction,negation).
-data BExp = BEq String String
+data BExp = BEq Int Int
           | BNeg BExp
           | BCon BExp BExp
           | BDis BExp BExp
@@ -89,7 +88,7 @@ data BExp = BEq String String
 -- | The type of every top-level ABS-method.
 type Method = [Ref]             -- ^ a list of passed (deref) parameters
             -> ObjRef            -- ^ this obj
-            -> Maybe String      -- ^ in case of sync call: a writeback attribute to write the return result to
+            -> Maybe Int         -- ^ in case of sync call: a writeback attribute to write the return result to
             -> Cont              -- ^ the continuation after the method is finished
             -> Cont              -- ^ the resulting method's continuation that will start executing when applied to ()
 

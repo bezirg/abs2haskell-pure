@@ -22,22 +22,23 @@ m2 = {
 
 -}
 
+(x:y:f:z:_) = [1..]
 
 main_ :: Method
 main_ [] this wb k = \ () ->
-                     Assign "x" (Sync m1 []) k
+                     Assign x (Sync m1 []) k
 
 m1 :: Method
 m1 [] this wb k = \ () ->
-                  Assign "y" New $ \ () -> 
-                      Assign "f" (Async "y" m2 []) $ \ () ->
-                          Assign "z" (Get "f") $ \ () ->
-                              Return "z" wb k
+                  Assign y New $ \ () -> 
+                      Assign f (Async y m2 []) $ \ () ->
+                          Assign z (Get f) $ \ () ->
+                              Return z wb k
 
 m2 :: Method
 m2 [] this wb k = \ () ->
-                  Assign "z" New $ \ () ->
-                      Return "z" wb k
+                  Assign z New $ \ () ->
+                      Return z wb k
 
 main :: IO ()
 main = print =<< run 11 main_
