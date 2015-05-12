@@ -41,13 +41,14 @@ m2 [] this wb k = \ () ->
                       Return z wb k
 
 main :: IO ()
-main = print =<< run 11 main_
+main = printHeap =<< run 11 main_
 
 
 {- passes, output
 finished (empty schedtable), 2steps left
 Heap: {
-Objects: fromList [(0,(fromList [("__main__",-123),("f",3),("x",4),("y",2),("z",4)],fromList [])),(2,(fromList [("z",4)],fromList [])),(4,(fromList [],fromList []))]
-Fut: fromList [(1,Just (-123)),(3,Just 4)]
-Counter: 5}
+    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList []))(0,(fromList [(0,-123),(1,4),(2,2),(3,3),(4,4)],fromList []))
+    Futures:(3,Just 4)(1,Just (-123))
+    Counter: 5
+}
 -}

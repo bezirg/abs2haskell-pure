@@ -37,15 +37,16 @@ m1 [] this wb k = \ () ->
 
 
 main :: IO ()
-main = print =<< run 10000 main_
+main = printHeap =<< run 10000 main_
 
 {- passes, diverges, as it should
 reached max steps
 Last SchedTable: fromList [2,0]
 Heap: {
-Objects: fromList [(0,(fromList [("__main__",-123),("f",3),("x",2)],fromList [(1,"<fun>")])),(2,(fromList [("z",4)],fromList [(3,"<fun>")])),(4,(fromList [],fromList []))]
-Fut: fromList [(1,Nothing),(3,Nothing)]
-Counter: 5}
+    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList [(3,"<fun>")]))(0,(fromList [(0,-123),(1,2),(2,3)],fromList [(1,"<fun>")]))
+    Futures:(3,Nothing)(1,Nothing)
+    Counter: 5
+}
  -}
 
 

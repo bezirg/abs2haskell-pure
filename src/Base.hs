@@ -34,7 +34,7 @@ data Heap = Heap { objects :: Objects -- ^ the live objects
                  }
 
 -- | The objects of the heap is a table _from_ an object's 'Ref'erence _to_ another table of the object's attributes: 'Attrs'
-type Objects = IOVector (Attrs, Seq Proc)
+type Objects = IOVector (Maybe (Attrs, Seq Proc))
 
 -- | The attributes is a table _from_ the attribute name ('String') _to_ its value ('Ref')
 type Attrs = IOVector Ref
@@ -42,7 +42,7 @@ type Attrs = IOVector Ref
 -- | The futures of the heap is a table _of_ future's 'Ref'erences _to_ their potential final values.
 -- A future is empty ('Nothing') until it is resolved (filled with 'Just value'), hence its type 'Maybe Ref'.
 -- A future reference must be 'final', and this must be guaranteed by the runtime system.
-type Futures = IOVector (Maybe Ref)
+type Futures = IOVector (Maybe (Maybe Ref))
 
 -- | We have a single (universal) type for our continuations. 
 -- Later, if we introduce local-variables we are going to need an extra type for Continuations: 'Ref -> Stmt'
