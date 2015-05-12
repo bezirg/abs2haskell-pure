@@ -41,10 +41,10 @@ main = printHeap =<< run 10000 main_
 
 {- passes, diverges, as it should
 reached max steps
-Last SchedTable: fromList [2,0]
+Last SchedTable: fromList [2]
 Heap: {
     Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList [(3,"<fun>")]))(0,(fromList [(0,-123),(1,2),(2,3)],fromList [(1,"<fun>")]))
-    Futures:(3,Nothing)(1,Nothing)
+    Futures:(3,Left [0])(1,Left [])
     Counter: 5
 }
  -}

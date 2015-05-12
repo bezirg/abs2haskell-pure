@@ -26,7 +26,7 @@ run iters mainMethod = do
                                                                        ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
                                                                        )))
     initFutVec <- V.replicate 10 Nothing    -- the initial future vector (starting size: 10)
-    (initFutVec `V.write` mainFutRef) (Just Nothing) -- putting the main destiny
+    (initFutVec `V.write` mainFutRef) (Just $ Left []) -- putting the main unresolved destiny
     let initHeap = Heap { objects = initObjVec
                         , futures = initFutVec
                         , newRef = mainFutRef+1}

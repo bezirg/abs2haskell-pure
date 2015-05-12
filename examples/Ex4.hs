@@ -51,10 +51,10 @@ main :: IO ()
 main = printHeap =<< run 50 main_
 
 {- passes, output
-finished (empty schedtable), 33steps left
+finished (empty schedtable), 37steps left
 Heap: {
-    Objects:(4,(fromList [],fromList []))(2,(fromList [(5,4),(6,3),(7,4),(8,4)],fromList []))(0,(fromList [(0,-123),(1,2),(2,3),(3,5),(4,4)],fromList []))
-    Futures:(5,Just 4)(3,Just 4)(1,Just (-123))
+    Objects:(5,(fromList [],fromList []))(2,(fromList [(5,5),(6,3),(7,5),(8,5)],fromList []))(0,(fromList [(0,-123),(1,2),(2,3),(3,4),(4,5)],fromList []))
+    Futures:(4,Right 5)(3,Right 5)(1,Right (-123))
     Counter: 6
 }
 -}

@@ -34,14 +34,16 @@ eval this h = do
                                    )
                         -- async call
                         Nothing -> do
-                           Just fut <- futures h `V.read` destiny
-                           when (isJust fut) $ error "tried to return to an already resolved future"
-                           -- unresolved future
-                           (futures h `V.write` destiny) =<< (liftM (Just . Just) $ attrs `V.read` attr)
-                           (objects h `V.write` this) (Just (attrs, restProcs))
-                           return (res, 
-                                   [this | not $ S.null restProcs],
-                                   (h))
+                           fut <- futures h `V.read` destiny
+                           case fut of
+                             Nothing -> error "this should not happen: future not found"
+                             Just (Right _) -> error "this should not happen: tried to return to an already resolved future"
+                             Just (Left blockedCallers) -> do
+                                      (futures h `V.write` destiny) =<< (liftM (Just . Right) $ attrs `V.read` attr) -- resolve the future
+                                      (objects h `V.write` this) (Just (attrs, restProcs))
+                                      return (res, 
+                                              [this | not $ S.null restProcs] ++ blockedCallers, -- wake-up the blocked callers
+                                              h)
         If bexp t e k' -> do
                         bres <- beval bexp
                         updateObj $ Left $ if bres
@@ -63,7 +65,7 @@ eval this h = do
           case fut of
             -- unresolved future
             Nothing -> do
-                     updateObj $ Right $ \ () -> Await attr k' -- loop with await remaining
+                     updateObj $ Right c -- loop with await remaining
                      return (res, 
                              [this],
                              h) 
@@ -81,17 +83,20 @@ eval this h = do
                         return (res,
                                 [this],
                                 h {newRef = newRef h + 1})
-        Assign lhs (Get f) k' -> do
-          fut <- V.read (futures h) =<< attrs `V.read` f
-          case fut of
+        Assign lhs (Get a) k' -> do
+          f <- attrs `V.read` a
+          fval <- (futures h) `V.read` f
+          case fval of
             -- unresolved future
-            Just Nothing -> do
-                     updateObj $ Left $ \ () -> Assign lhs (Get f) k' 
+            Just (Left blockedCallers) -> do
+                     when (null blockedCallers) $ do
+                              (futures h `V.write` f) (Just $ Left [this]) -- add this to the blockers
+                     updateObj $ Left c
                      return (res, 
-                             [this],
+                             [], -- don't re-sched this
                              h)
             -- already-resolved future
-            Just (Just v) -> do
+            Just (Right v) -> do
                      (attrs `V.write` lhs) v 
                      updateObj $ Left k'
                      return (res,
@@ -121,9 +126,10 @@ eval this h = do
             (attrs `V.write` lhs) (newRef h) 
             updateObj (Left k')
             (objects h `V.write` calleeObj) (Just (calleeAttrs, calleeProcQueue S.|> newProc))
-            (futures h `V.write` newRef h) (Just Nothing)  -- create a new unresolved future
+            (futures h `V.write` newRef h) (Just $ Left [])  -- create a new unresolved future
             return (res,
-                    (if S.null calleeProcQueue then (calleeObj:) else id) [this]
+                    -- (if S.null calleeProcQueue then (calleeObj:) else id) [this]
+                     this:[calleeObj  | S.null calleeProcQueue] 
                    ,h {newRef = newRef h + 1})
         Assign lhs (Param r) k' -> do
                         (attrs `V.write` lhs) r
@@ -149,10 +155,3 @@ eval this h = do
         beval (BDis exp1 exp2) = liftM2 (||) (beval exp1) (beval exp2)
         beval (BNeg exp1) = liftM not $ beval exp1
         beval (BEq attr1 attr2) = liftM2 (==) (attrs `V.read` attr1) (attrs `V.read` attr2)
-
-        -- -- | Utility function to read an attribute from an object (this)
-        -- readAttr :: String               -- ^ the name of the attribute
-        --          -> Ref                  -- ^ its value
-        -- readAttr attr = case M.lookup attr attrs of
-        --                         Nothing -> error ("this = " ++ show this ++ ", attr = " ++ attr ++ " not found")
-        --                         Just v -> v

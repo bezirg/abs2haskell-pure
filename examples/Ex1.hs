@@ -24,7 +24,7 @@ main = printHeap =<< run 10 main_
 finished (empty schedtable), 6steps left
 Heap: {
     Objects:(2,(fromList [],fromList []))(0,(fromList [(0,-123),(1,0),(2,2),(3,2)],fromList []))
-    Futures:(1,Just (-123))
+    Futures:(1,Right (-123))
     Counter: 3
 }
 -}
