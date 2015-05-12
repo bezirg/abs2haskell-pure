@@ -4,7 +4,6 @@ module Eval where
 import Base
 import qualified Data.Sequence as S
 import qualified Data.Vector.Mutable as V
-import Data.Maybe
 import Control.Monad (when,liftM, liftM2)
 
 -- | eval takes a process and a heap and executes the 1st only statement of that process.
@@ -80,9 +79,10 @@ eval this h = do
                         updateObj $ Left k'
                         initAttrVec <- V.replicate 10 (-1)
                         (objects h `V.write` newRef h) (Just (initAttrVec, S.empty))
+                        h' <- incCounterMaybeGrow
                         return (res,
                                 [this],
-                                h {newRef = newRef h + 1})
+                                h')
         Assign lhs (Get a) k' -> do
           f <- attrs `V.read` a
           fval <- (futures h) `V.read` f
@@ -127,10 +127,11 @@ eval this h = do
             updateObj (Left k')
             (objects h `V.write` calleeObj) (Just (calleeAttrs, calleeProcQueue S.|> newProc))
             (futures h `V.write` newRef h) (Just $ Left [])  -- create a new unresolved future
+            h' <- incCounterMaybeGrow
             return (res,
                     -- (if S.null calleeProcQueue then (calleeObj:) else id) [this]
                      this:[calleeObj  | S.null calleeProcQueue] 
-                   ,h {newRef = newRef h + 1})
+                   ,h')
         Assign lhs (Param r) k' -> do
                         (attrs `V.write` lhs) r
                         updateObj $ Left k'
@@ -149,6 +150,19 @@ eval this h = do
                                                             Left k -> Proc (destiny, k) S.<| restProcs
                                                             Right k -> restProcs S.|> Proc (destiny, k)))
                                                                           
+        incCounterMaybeGrow :: IO Heap
+        incCounterMaybeGrow =  let curSize = V.length (objects h)
+                               in
+                                 if newRef h + 1 == curSize
+                                 then do
+                                   objects' <- V.grow (objects h) (curSize*2)
+                                   futures' <- V.grow (futures h) (curSize*2)
+                                   return h { objects = objects', 
+                                              futures = futures',
+                                              newRef = newRef h + 1
+                                            }
+                                 else return $ h {newRef = newRef h + 1}
+
         -- | Evaluates a predicate BExp from the AST to a Haskell's Bool
         beval :: BExp -> IO Bool
         beval (BCon exp1 exp2) = liftM2 (&&) (beval exp1) (beval exp2)
