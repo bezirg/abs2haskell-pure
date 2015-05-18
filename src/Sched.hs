@@ -17,16 +17,16 @@ run :: Int -> Method -> IO Heap
 run iters mainMethod = do
     let mainObjRef = 0 -- "main" object (0 ref by default)
     let mainFutRef = mainObjRef + 1 -- main-method's destiny (1 ref by default)
-    initObjVec <- V.replicate 10 Nothing         -- the initial object vector (starting size: 10)
+    initObjVec <- V.new 10         -- the initial object vector (starting size: 10)
     initAttrVec <- V.replicate 10 (-1)
     (initAttrVec `V.write` 0) (-123) -- the main object only has a default "__main__" attribute to return it in the end
     -- put the main object
-    (initObjVec `V.write` mainObjRef) (Just (initAttrVec, S.singleton $ Proc (mainFutRef
+    (initObjVec `V.write` mainObjRef) (initAttrVec, S.singleton $ Proc (mainFutRef
                                                                        -- async call to main method
                                                                        ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
-                                                                       )))
-    initFutVec <- V.replicate 10 Nothing    -- the initial future vector (starting size: 10)
-    (initFutVec `V.write` mainFutRef) (Just $ Left []) -- putting the main unresolved destiny
+                                                                       ))
+    initFutVec <- V.new 10    -- the initial future vector (starting size: 10)
+    (initFutVec `V.write` mainFutRef) (Left []) -- putting the main unresolved destiny
     let initHeap = Heap { objects = initObjVec
                         , futures = initFutVec
                         , newRef = mainFutRef+1}

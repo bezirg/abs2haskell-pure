@@ -51,10 +51,4 @@ Heap: {
     Futures:(3,Right 4)(1,Right (-123))
     Counter: 5
 }
-finished (empty schedtable), 2steps left
-Heap: {
-    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList []))(0,(fromList [(0,-123),(1,4),(2,2),(3,3),(4,4)],fromList []))
-    Futures:(3,Right 4)(1,Right (-123))
-    Counter: 5
-}
 -}

@@ -14,7 +14,7 @@ eval :: ObjRef                     -- ^ the object to execute
        ,[ObjRef]                -- the number of objects that have to be appended to the scheduler's queue 
        , Heap)                  -- the new heap after the execution of the stmt
 eval this h = do
-  Just (attrs,pqueue) <- objects h `V.read` this
+  (attrs,pqueue) <- objects h `V.read` this
   case S.viewl pqueue of
      S.EmptyL -> error "this should not happen: scheduled an empty-proc object"
      (Proc (destiny, c)) S.:< restProcs -> let res = c ()
@@ -35,11 +35,10 @@ eval this h = do
                         Nothing -> do
                            fut <- futures h `V.read` destiny
                            case fut of
-                             Nothing -> error "this should not happen: future not found"
-                             Just (Right _) -> error "this should not happen: tried to return to an already resolved future"
-                             Just (Left blockedCallers) -> do
-                                      (futures h `V.write` destiny) =<< (liftM (Just . Right) $ attrs `V.read` attr) -- resolve the future
-                                      (objects h `V.write` this) (Just (attrs, restProcs))
+                             Right _ -> error "this should not happen: tried to return to an already resolved future"
+                             Left blockedCallers -> do
+                                      (futures h `V.write` destiny) =<< liftM Right (attrs `V.read` attr) -- resolve the future
+                                      (objects h `V.write` this) (attrs, restProcs)
                                       return (res, 
                                               [this | not $ S.null restProcs] ++ blockedCallers, -- wake-up the blocked callers
                                               h)
@@ -63,13 +62,13 @@ eval this h = do
           fut <- V.read (futures h) =<< (attrs `V.read` attr)
           case fut of
             -- unresolved future
-            Nothing -> do
+            Left _ -> do
                      updateObj $ Right c -- loop with await remaining
                      return (res, 
                              [this],
                              h) 
             -- already-resolved future
-            Just _ -> do
+            Right _ -> do
                      updateObj $ Left k'
                      return (res, 
                              [this],
@@ -78,7 +77,7 @@ eval this h = do
                         (attrs `V.write` lhs) $ newRef h
                         updateObj $ Left k'
                         initAttrVec <- V.replicate 10 (-1)
-                        (objects h `V.write` newRef h) (Just (initAttrVec, S.empty))
+                        (objects h `V.write` newRef h) (initAttrVec, S.empty)
                         h' <- incCounterMaybeGrow
                         return (res,
                                 [this],
@@ -88,21 +87,20 @@ eval this h = do
           fval <- (futures h) `V.read` f
           case fval of
             -- unresolved future
-            Just (Left blockedCallers) -> do
+            Left blockedCallers -> do
                      when (null blockedCallers) $ do
-                              (futures h `V.write` f) (Just $ Left [this]) -- add this to the blockers
+                              (futures h `V.write` f) (Left [this]) -- add this to the blockers
                      updateObj $ Left c
                      return (res, 
                              [], -- don't re-sched this
                              h)
             -- already-resolved future
-            Just (Right v) -> do
+            Right v -> do
                      (attrs `V.write` lhs) v 
                      updateObj $ Left k'
                      return (res,
                              [this],
                              h)
-            Nothing -> error "future: this should not happen"
         Assign lhs (Sync m params) k' -> do
                         derefed_params <- mapM (attrs `V.read`) params -- read the passed attrs
                         updateObj $ Left (m 
@@ -115,7 +113,7 @@ eval this h = do
                                 h) 
         Assign lhs (Async obj m params) k' -> do
             calleeObj <- attrs `V.read` obj -- read the callee object
-            Just (calleeAttrs, calleeProcQueue) <- (objects h `V.read` calleeObj)
+            (calleeAttrs, calleeProcQueue) <- (objects h `V.read` calleeObj)
             derefed_params <- mapM (attrs `V.read`) params -- read the passed attrs
             let newCont = m 
                           derefed_params
@@ -125,8 +123,8 @@ eval this h = do
             let newProc = Proc (newRef h, newCont)
             (attrs `V.write` lhs) (newRef h) 
             updateObj (Left k')
-            (objects h `V.write` calleeObj) (Just (calleeAttrs, calleeProcQueue S.|> newProc))
-            (futures h `V.write` newRef h) (Just $ Left [])  -- create a new unresolved future
+            (objects h `V.write` calleeObj) (calleeAttrs, calleeProcQueue S.|> newProc)
+            (futures h `V.write` newRef h) (Left [])  -- create a new unresolved future
             h' <- incCounterMaybeGrow
             return (res,
                     -- (if S.null calleeProcQueue then (calleeObj:) else id) [this]
@@ -146,17 +144,17 @@ eval this h = do
                                 h)
       where
         updateObj :: Either Cont Cont -> IO ()
-        updateObj ek = (objects h `V.write` this) (Just (attrs, case ek of
+        updateObj ek = (objects h `V.write` this) (attrs, case ek of
                                                             Left k -> Proc (destiny, k) S.<| restProcs
-                                                            Right k -> restProcs S.|> Proc (destiny, k)))
+                                                            Right k -> restProcs S.|> Proc (destiny, k))
                                                                           
         incCounterMaybeGrow :: IO Heap
         incCounterMaybeGrow =  let curSize = V.length (objects h)
                                in
                                  if newRef h + 1 == curSize
                                  then do
-                                   objects' <- V.grow (objects h) (curSize*2)
-                                   futures' <- V.grow (futures h) (curSize*2)
+                                   objects' <- V.grow (objects h) curSize -- new array will have double the current size
+                                   futures' <- V.grow (futures h) curSize -- new array will have double the current size
                                    return h { objects = objects', 
                                               futures = futures',
                                               newRef = newRef h + 1
