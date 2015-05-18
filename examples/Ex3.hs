@@ -19,31 +19,34 @@ m1 = {
 
 -}
 
+(x:f:y:z:_) = [1..]
+
 main_ :: Method
 main_ [] this wb k = \ () ->
-                     Assign  "x" New $ \ () ->
-                         Assign "f" (Async "x" m1 []) $ \ () ->
-                             Assign"y" (Get "f") k
+                     Assign  x New $ \ () ->
+                         Assign f (Async x m1 []) $ \ () ->
+                             Assign y (Get f) k
 
 
 m1 :: Method
 m1 [] this wb k = \ () ->
-                  Assign "z" New $ \ () ->
-                      While ("z" `BEq` "z") 
+                  Assign z New $ \ () ->
+                      While (z `BEq` z) 
                                 (\ k' -> Skip k') $ \ () ->
-                                    Return "z" wb k
+                                    Return z wb k
 
 
 main :: IO ()
-main = print (run 10000 main_)
+main = printHeap =<< run 10000 main_
 
 {- passes, diverges, as it should
 reached max steps
-Last ProcTable: fromList [(0,fromList [(0,1,"<fun>")]),(2,fromList [(2,3,"<fun>")])]
+Last SchedTable: fromList [2]
 Heap: {
-Objects: fromList [(0,fromList [("__main__",-123),("f",3),("x",2)]),(2,fromList [("z",4)]),(4,fromList [])]
-Fut: fromList [(1,Nothing),(3,Nothing)]
-Counter: 5}
+    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList [(3,"<fun>")]))(0,(fromList [(0,-123),(1,2),(2,3)],fromList [(1,"<fun>")]))
+    Futures:(3,Left [0])(1,Left [])
+    Counter: 5
+}
  -}
 
 

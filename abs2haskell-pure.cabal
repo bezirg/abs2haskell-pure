@@ -1,5 +1,5 @@
 name: abs2haskell-pure
-version: 0.0.5
+version: 0.1.6
 synopsis: A "pure" implementation of an ABS-subset for analysis purposes
 description: A "pure" implementation of an ABS-subset for analysis purposes
 author: Nikolaos Bezirgiannis, Enrique Martin, Frank de Boer
@@ -15,7 +15,8 @@ Source-repository this
 
 library
   build-depends:      base,
-                      containers
+                      containers,
+                      vector
   exposed-modules:
                       -- the ABS' AST and the ABS-runtime data-structures
                       Base,

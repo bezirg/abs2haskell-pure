@@ -22,31 +22,33 @@ m2 = {
 
 -}
 
+(x:y:f:z:_) = [1..]
 
 main_ :: Method
 main_ [] this wb k = \ () ->
-                     Assign "x" (Sync m1 []) k
+                     Assign x (Sync m1 []) k
 
 m1 :: Method
 m1 [] this wb k = \ () ->
-                  Assign "y" New $ \ () -> 
-                      Assign "f" (Async "y" m2 []) $ \ () ->
-                          Assign "z" (Get "f") $ \ () ->
-                              Return "z" wb k
+                  Assign y New $ \ () -> 
+                      Assign f (Async y m2 []) $ \ () ->
+                          Assign z (Get f) $ \ () ->
+                              Return z wb k
 
 m2 :: Method
 m2 [] this wb k = \ () ->
-                  Assign "z" New $ \ () ->
-                      Return "z" wb k
+                  Assign z New $ \ () ->
+                      Return z wb k
 
 main :: IO ()
-main = print (run 11 main_)
+main = printHeap =<< run 11 main_
 
 
 {- passes, output
-finished (empty proctable), 1steps left
+finished (empty schedtable), 2steps left
 Heap: {
-Objects: fromList [(0,fromList [("__main__",-123),("f",3),("x",4),("y",2),("z",4)]),(2,fromList [("z",4)]),(4,fromList [])]
-Fut: fromList [(1,Just (-123)),(3,Just 4)]
-Counter: 5}
+    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList []))(0,(fromList [(0,-123),(1,4),(2,2),(3,3),(4,4)],fromList []))
+    Futures:(3,Right 4)(1,Right (-123))
+    Counter: 5
+}
 -}

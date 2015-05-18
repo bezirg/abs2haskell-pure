@@ -1,8 +1,8 @@
 -- | The ABS' AST and the ABS-runtime data-structures
 module Base where
 
-import Data.Map (Map)
 import Data.Sequence (Seq)
+import Data.Vector.Mutable (IOVector) 
 
 -- * The values of our language
 
@@ -33,52 +33,60 @@ data Heap = Heap { objects :: Objects -- ^ the live objects
                  , newRef :: Counter  -- ^ the counter
                  }
 
--- | The objects of the heap is a table _from_ an object's 'Ref'erence _to_ another table of the object's attributes: 'Attrs'
-type Objects = Map ObjRef Attrs
+-- | The objects of the heap is a _growable_ int-indexed array where each cell is a pair of the object's attributes and the object's process queue
+type Objects = IOVector (Attrs, Seq Proc)
 
--- | The attributes is a table _from_ the attribute name ('String') _to_ its value ('Ref')
-type Attrs = Map String Ref
+-- | The attributes is a __fixed__ array of the attributes values ('Ref's)
+--
+-- We assume some static analysis to collect the possible attributes and transform them to Ints so they can become the indices to this array.
+type Attrs = IOVector Ref
 
--- | The futures of the heap is a table _of_ future's 'Ref'erences _to_ their potential final values.
--- A future is empty ('Nothing') until it is resolved (filled with 'Just value'), hence its type 'Maybe Ref'.
--- A future reference must be 'final', and this must be guaranteed by the runtime system.
-type Futures = Map FutRef (Maybe Ref)
+-- | The futures of the heap is a _growable_ int-indexed array of the futures' potential final values.
+-- 
+-- A future is empty ('Left'), with n callers waiting on it (for our case it is only 1 caller waiting) 
+-- A future is resolved (filled with 'Right value'), hence its type "Either [ObjRef] Ref".
+-- A future reference must be 'final' after resolved, and this must be guaranteed by the runtime system.
+type Futures = IOVector (Either [ObjRef] Ref)
 
 -- | We have a single (universal) type for our continuations. 
 -- Later, if we introduce local-variables we are going to need an extra type for Continuations: 'Ref -> Stmt'
 type Cont = () -> Stmt
 
--- | Each process is a triple of the this object, its destiny, and its (resumable) continuation
+-- | Each process is a pair of its destiny, and its (resumable) continuation
+--
 -- (note: is a newtype just for overriding its Show instance, check module "PP")
-newtype Proc = Proc {fromProc :: (ObjRef, FutRef, Cont)}
+newtype Proc = Proc {fromProc :: (FutRef, Cont)}
 
 -- | The (global) scheduler's runtime Process Table.
+--
 -- It is a round-robin queue _from_ an object-reference _to_ a double-ended queue of processes beloning to that object
-type ProcTable = Seq (ObjRef, Seq Proc)
+type SchedQueue = Seq ObjRef
 
 -- * Our language's AST and types
 
 -- | An ABS statement.
+--
 -- Statements are "chained" (sequantially composed) by deeply nesting them through 'Cont'inuations.
-data Stmt = Assign String Rhs Cont -- ^ "attr" := Rhs; cont...
-          | Await String Cont      -- ^ await "attr"; cont...
+data Stmt = Assign Int Rhs Cont -- ^ "attr" := Rhs; cont...
+          | Await Int Cont      -- ^ await "attr"; cont...
           | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont -- ^ if pred ThenClause ElseClause; cont... 
           | While BExp (Cont -> Stmt) Cont            -- ^ while pred BodyClause; cont...
           | Skip Cont                                -- ^ skip; cont...
-          | Return String (Maybe String) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
+          | Return Int (Maybe Int) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
 
 -- | the RHS of an assignment
 data Rhs = New
-         | Get String
-         | Async String Method [String]
-         | Sync Method [String]
+         | Get Int
+         | Async Int Method [Int]
+         | Sync Method [Int]
          | Param Ref         -- ^ all commands operate on attributes; to use instead a method's parameter (passed argument or this) you first store it to an (auxiliary) attribute, e.g. Assign "attr" (Param this)
-         | Attr String       -- ^ assign an attribute to the value of another attribute
+         | Attr Int       -- ^ assign an attribute to the value of another attribute
          -- we do not need This, because it is passed as a local parameter on each method
 
 -- | A boolean expression occurs only as a control-flow predicate (if & while) 
+--
 -- It does only reference equality of attributes ('BEq') and combinators on them (conjuction,disjunction,negation).
-data BExp = BEq String String
+data BExp = BEq Int Int
           | BNeg BExp
           | BCon BExp BExp
           | BDis BExp BExp
@@ -88,7 +96,7 @@ data BExp = BEq String String
 -- | The type of every top-level ABS-method.
 type Method = [Ref]             -- ^ a list of passed (deref) parameters
             -> ObjRef            -- ^ this obj
-            -> Maybe String      -- ^ in case of sync call: a writeback attribute to write the return result to
+            -> Maybe Int         -- ^ in case of sync call: a writeback attribute to write the return result to
             -> Cont              -- ^ the continuation after the method is finished
             -> Cont              -- ^ the resulting method's continuation that will start executing when applied to ()
 
