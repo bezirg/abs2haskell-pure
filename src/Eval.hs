@@ -76,7 +76,7 @@ eval this h = do
         Assign lhs New k' -> do
                         (attrs `V.write` lhs) $ newRef h
                         updateObj $ Left k'
-                        initAttrVec <- V.replicate 10 (-1)
+                        initAttrVec <- V.replicate inisize (-1)
                         (objects h `V.write` newRef h) (initAttrVec, S.empty)
                         h' <- incCounterMaybeGrow
                         return (res,
@@ -91,9 +91,10 @@ eval this h = do
                      when (null blockedCallers) $ do
                               (futures h `V.write` f) (Left [this]) -- add this to the blockers
                      updateObj $ Left c
-                     return (res, 
+                     --return (res, 
+                     return( GetBlocked, -- dummy instruction to express that 'get' is blocked
                              [], -- don't re-sched this
-                             h)
+                             h)  
             -- already-resolved future
             Right v -> do
                      (attrs `V.write` lhs) v 

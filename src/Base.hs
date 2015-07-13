@@ -4,6 +4,10 @@ module Base where
 import Data.Sequence (Seq)
 import Data.Vector.Mutable (IOVector) 
 
+-- Initial size of Vectors
+inisize :: Int
+inisize = 10000
+
 -- * The values of our language
 
 -- | We only have one type for our values: the 'Ref'erence
@@ -70,9 +74,10 @@ type SchedQueue = Seq ObjRef
 data Stmt = Assign Int Rhs Cont -- ^ "attr" := Rhs; cont...
           | Await Int Cont      -- ^ await "attr"; cont...
           | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont -- ^ if pred ThenClause ElseClause; cont... 
-          | While BExp (Cont -> Stmt) Cont            -- ^ while pred BodyClause; cont...
-          | Skip Cont                                -- ^ skip; cont...
-          | Return Int (Maybe Int) Cont        -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
+          | While BExp (Cont -> Stmt) Cont             -- ^ while pred BodyClause; cont...
+          | Skip Cont                                  -- ^ skip; cont...
+          | Return Int (Maybe Int) Cont                -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
+          | GetBlocked                                 -- ^ Dummy instruction to be returned by sched'
 
 -- | the RHS of an assignment
 data Rhs = New
