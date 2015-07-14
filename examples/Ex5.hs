@@ -6,6 +6,7 @@ import ABS
 
 main = {
    "x" = m1();
+   "y" = x;
 }
 
 m1 = {
@@ -26,7 +27,7 @@ m2 = {
 
 main_ :: Method
 main_ [] this wb k = \ () ->
-                     Assign x (Sync m1 []) k
+                     Assign x (Sync m1 []) (\ () -> Assign y (Attr x) k)
 
 m1 :: Method
 m1 [] this wb k = \ () ->
@@ -45,10 +46,12 @@ main = printHeap =<< run 11 main_
 
 
 {- passes, output
-finished (empty schedtable), 2steps left
-Heap: {
-    Objects:(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList []))(0,(fromList [(0,-123),(1,4),(2,2),(3,3),(4,4)],fromList []))
-    Futures:(3,Right 4)(1,Right (-123))
-    Counter: 5
+finished (empty schedtable), 1steps left
+Object Heap with array-size:10{
+(4,(fromList [],fromList []))(2,(fromList [(4,4)],fromList []))(0,(fromList [(0,-123),(1,4),(2,4),(3,3),(4,4)],fromList []))
 }
+Future Heap with array-size:10{
+(3,Right 4)(1,Right (-123))
+}
+    Counter: 5
 -}
