@@ -4,13 +4,13 @@ import ABS
 import Debug.Trace
 
 -- Attributes ids' trick
-(actors:rounds                  -- parameters of the program
+attrs@(actors:rounds                  -- parameters of the program
  :afirst:anext -- holding actors
  :iD:iDnext         -- each actor has an id (int) because we want to use arithmetic on it
  :rcurrent:rnext     -- each actor hold the current round number (int) and the next (we do arithmetic on it)
  :f1                 -- dummy future for async calls
  :vlast              -- a dummy object that holds the value 1
- :_) = [1..]
+ :[]) = [1..10]
 
 {-
 main := 
@@ -100,4 +100,4 @@ go [round_] this wb k = \ () ->
 
 
 main :: IO ()
-main = printHeap =<< run 10000 main_
+main = printHeap =<< run 10000 main_ (length attrs + 1)

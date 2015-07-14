@@ -4,9 +4,9 @@ module Base where
 import Data.Sequence (Seq)
 import Data.Vector.Mutable (IOVector) 
 
--- Initial size of Vectors
-inisize :: Int
-inisize = 10000
+-- | Initial size of each heap (object heap and future heap)
+heapInitialSize :: Int
+heapInitialSize = 10
 
 -- * The values of our language
 

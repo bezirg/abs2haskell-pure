@@ -19,7 +19,7 @@ m1 = {
 
 -}
 
-(x:f:y:z:_) = [1..]
+attrs@(x:f:y:z:[]) = [1..4]
 
 main_ :: Method
 main_ [] this wb k = \ () ->
@@ -37,7 +37,7 @@ m1 [] this wb k = \ () ->
 
 
 main :: IO ()
-main = printHeap =<< run 10000 main_
+main = printHeap =<< run 10000 main_ (length attrs+1)
 
 {- passes, diverges, as it should
 reached max steps

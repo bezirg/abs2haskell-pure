@@ -23,7 +23,7 @@ m2 = {
 
 -}
 
-(x:y:f:z:_) = [1..]
+attrs@(x:y:f:z:_) = [1..4]
 
 main_ :: Method
 main_ [] this wb k = \ () ->
@@ -42,7 +42,7 @@ m2 [] this wb k = \ () ->
                       Return z wb k
 
 main :: IO ()
-main = printHeap =<< run 11 main_
+main = printHeap =<< run 11 main_ (length attrs+1)
 
 
 {- passes, output

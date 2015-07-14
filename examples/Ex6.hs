@@ -62,7 +62,7 @@ m1() = {
 
 -}
 
-(o:f:t:_) = [1..]
+attrs@(o:f:t:[]) = [1..3]
 
 
 main_ :: Method
@@ -121,7 +121,7 @@ m1 [] this wb k = \ () ->
                   Return t wb k
 
 main :: IO ()
-main = printHeap =<< run 89 main_
+main = printHeap =<< run 89 main_ (length attrs+1)
 
 
 {- passes output,

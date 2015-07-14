@@ -16,7 +16,7 @@ m1 = {
 
 -}
 
-(x:f:y:z:_) = [1..]
+attrs@(x:f:y:z:[]) = [1..4]
 
 main_ :: Method
 main_ [] this wb k = \ () ->
@@ -30,7 +30,7 @@ m1 [] this wb k = \ () ->
       Return z wb k
 
 main :: IO ()
-main = printHeap =<< run 10 main_
+main = printHeap =<< run 10 main_ (length attrs+1)
 
 {- passes, output
 finished (empty schedtable), 3steps left

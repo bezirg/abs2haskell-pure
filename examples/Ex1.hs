@@ -10,7 +10,7 @@ main = {
 }
 -}
 
-(t:x:y:_) = [1..]
+attrs@(t:x:y:[]) = [1..3]
 
 main_ :: Method
 main_ [] this wb k = \ () -> 
@@ -18,7 +18,7 @@ main_ [] this wb k = \ () ->
                          Assign x New $ \ () ->
                              Assign y (Attr x) k
 main :: IO ()
-main = printHeap =<< run 10 main_
+main = printHeap =<< run 10 main_ (length attrs+1)
 
 {- passes, output
 finished (empty schedtable), 6steps left

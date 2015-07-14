@@ -10,10 +10,11 @@ import Control.Monad (when,liftM, liftM2)
 -- Returns the executed statement, max 2 objects to reschedule, and a new heap
 eval :: ObjRef                     -- ^ the object to execute
      -> Heap                       -- ^ inside a heap
+     -> Int                        -- ^ the fixed number of possible attributes
      -> IO (Stmt                    -- the 1st only statement of this process that has been fully executed
        ,[ObjRef]                -- the number of objects that have to be appended to the scheduler's queue 
        , Heap)                  -- the new heap after the execution of the stmt
-eval this h = do
+eval this h attrArrSize = do
   (attrs,pqueue) <- objects h `V.read` this
   case S.viewl pqueue of
      S.EmptyL -> error "this should not happen: scheduled an empty-proc object"
@@ -76,7 +77,7 @@ eval this h = do
         Assign lhs New k' -> do
                         (attrs `V.write` lhs) $ newRef h
                         updateObj $ Left k'
-                        initAttrVec <- V.replicate inisize (-1)
+                        initAttrVec <- V.replicate attrArrSize (-1)
                         (objects h `V.write` newRef h) (initAttrVec, S.empty)
                         h' <- incCounterMaybeGrow
                         return (res,
