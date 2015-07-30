@@ -1,8 +1,8 @@
 name: abs2haskell-pure
-version: 0.1.6
+version: 0.2.9
 synopsis: A "pure" implementation of an ABS-subset for analysis purposes
 description: A "pure" implementation of an ABS-subset for analysis purposes
-author: Nikolaos Bezirgiannis, Enrique Martin, Frank de Boer
+author: Nikolaos Bezirgiannis, Enrique Martin, Elvira Albert, Frank de Boer
 maintainer: Nikolaos Bezirgiannis <bezirgia@cwi.nl>
 stability: provisional
 build-type: Simple
@@ -15,21 +15,24 @@ Source-repository this
 
 library
   build-depends:      base,
+                      -- for scheduler-queue of objects, and dequeue of processes inside an object with Data.Sequence
                       containers,
+                      -- for the heap array: heap of objects (each with an attr array) and futures (either [listener] value)
                       vector
   exposed-modules:
-                      -- the ABS' AST and the ABS-runtime data-structures
+                      -- * the ABS' AST and the ABS-runtime data-structures
                       Base,
-                      -- a single-step evaluator/interpreter of ABS terms (from AST)
+                      -- * a single-statement evaluator/interpreter of ABS terms (from AST)
                       Eval,
-                      -- the global scheduler that schedules COGs (single-objects in our case)
-                      -- simulates non-determinism by pseudo-randomness
+                      -- * the global-system scheduler that schedules concurrent-objects and their processes
                       Sched,
-                      -- for debugging: Show-instances of heaps and processes 
+                      -- * for debugging a Heap result of an execution (Show-instances for heap and process)
                       PP,
-                      -- a wrapper module that exposes all of the above modules
+                      -- * Wrapper module that reexports all of the above modules
                       ABS
+  other-modules:
+                      -- * purely-functional queues (taken from Okasaki)
+                      Q                                    
   hs-source-dirs:     src
-  extensions:         LambdaCase
   ghc-options:        -Wall
                                                                                         

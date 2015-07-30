@@ -1,4 +1,4 @@
-module Ex6 where
+module Main where
 
 import ABS
 

@@ -6,19 +6,19 @@ import qualified Data.Sequence as S
 import qualified Data.Vector.Mutable as V
 import Control.Monad (when,liftM, liftM2)
 
--- | eval takes a process and a heap and executes the 1st only statement of that process.
+-- | eval takes an object and a heap and executes the 1st only statement of the 1st process of that object.
 -- Returns the executed statement, max 2 objects to reschedule, and a new heap
 eval :: ObjRef                     -- ^ the object to execute
      -> Heap                       -- ^ inside a heap
      -> Int                        -- ^ the fixed number of possible attributes
-     -> IO (Stmt                    -- the 1st only statement of this process that has been fully executed
-       ,[ObjRef]                -- the number of objects that have to be appended to the scheduler's queue 
-       , Heap)                  -- the new heap after the execution of the stmt
+     -> IO (Stmt                   
+          ,[ObjRef]                
+          , Heap)                 -- ^ (executed-statement,objects-to-be-(re)scheduled,new-heap) 
 eval this h attrArrSize = do
   (attrs,pqueue) <- objects h `V.read` this
   case S.viewl pqueue of
      S.EmptyL -> error "this should not happen: scheduled an empty-proc object"
-     (Proc (destiny, c)) S.:< restProcs -> let res = c ()
+     (Proc (destiny, c) S.:< restProcs) -> let res = c ()
                                           in case res of
         Skip k' -> do
                 updateObj $ Left k'
@@ -145,18 +145,20 @@ eval this h attrArrSize = do
                                 [this], 
                                 h)
       where
+        -- | updates the object's process-queue by pushing to the front the new process (continuation) (or to the back if it resulted from an await)
         updateObj :: Either Cont Cont -> IO ()
         updateObj ek = (objects h `V.write` this) (attrs, case ek of
                                                             Left k -> Proc (destiny, k) S.<| restProcs
                                                             Right k -> restProcs S.|> Proc (destiny, k))
                                                                           
+        -- | increases the memory counter and maybe grows (doubles) the heap if it reaches its limit
         incCounterMaybeGrow :: IO Heap
         incCounterMaybeGrow =  let curSize = V.length (objects h)
                                in
                                  if newRef h + 1 == curSize
                                  then do
-                                   objects' <- V.grow (objects h) curSize -- new array will have double the current size
-                                   futures' <- V.grow (futures h) curSize -- new array will have double the current size
+                                   objects' <- V.grow (objects h) curSize -- new object heap will have double the current size
+                                   futures' <- V.grow (futures h) curSize -- new future heap will have double the current size
                                    return h { objects = objects', 
                                               futures = futures',
                                               newRef = newRef h + 1

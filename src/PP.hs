@@ -7,6 +7,7 @@ import Control.Monad (foldM)
 import qualified Data.Vector as V (freeze, filter, indexed)
 import Control.Exception
 
+-- | util to pretty-print a heap
 printHeap :: Heap -> IO ()
 printHeap (Heap os fs c) = do
   oList <- foldM (\ acc i -> (do                   
