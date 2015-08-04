@@ -27,21 +27,26 @@ go [current]this :=
 
 main_ :: Method
 main_ [] this wb k = 
-    Assign next (Param 100) $ 
-    Assign next (Sync go [next]) k
+    assign next (Param 100) $ 
+    assign next (Sync go [next]) k
 
 go :: Method
 go [current] this wb k = 
-  Assign next (Param (current-1)) $ 
-  Assign zero (Param 0) $ -- constant
-  If (BNeg (next `BEq` zero))
+  assign next (Param (current-1)) $ 
+  assign zero (Param 0) $ -- constant
+  if_ (BNeg (next `BEq` zero))
      (\ k' -> 
-             Assign r New $ 
-             Assign g (Async r go [next]) $ 
-             Await g k')
-     Skip $ 
-  Return next wb k -- dummy
+             assign r New $ 
+             assign g (Async r go [next]) $ 
+             await g k')
+     skip $ 
+  return_ next wb k -- dummy
   
 
 main :: IO ()
 main = run' 10000000 main_ the_end
+
+{- new output
+Real steps:	0
+Total steps:	35153
+-}

@@ -62,12 +62,16 @@ type Futures = IOVector (Either [ObjRef] Ref)
 
 -- | We have a single (universal) type for our continuations. 
 -- Later, if we introduce local-variables we are going to need an extra type for Continuations: 'Ref -> Stmt'
-type Cont = Stmt
+-- type Cont = Stmt
 
 -- | Each process is a pair of its destiny future-reference, and its (resumable) continuation
 --
 -- (note: is a newtype just for overriding its Show instance, check module "PP")
 newtype Proc = Proc {fromProc :: (FutRef, Cont)}
+
+type Cont = (ObjRef, Heap) -> IO ([Ref], Heap)
+
+type CPS = Cont -> IO ([Ref], Heap)
 
 -- | The global-system scheduler's runtime Process Table.
 --
@@ -79,13 +83,13 @@ type SchedQueue = Q ObjRef
 -- | An ABS statement.
 --
 -- Statements are "chained" (sequantially composed) by deeply nesting them through 'Cont'inuations.
-data Stmt = Assign Int Rhs Cont -- ^ "attr" := Rhs; cont...
-          | Await Int Cont      -- ^ await "attr"; cont...
-          | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont -- ^ if pred ThenClause ElseClause; cont... 
-          | While BExp (Cont -> Stmt) Cont             -- ^ while pred BodyClause; cont...
-          | Skip Cont                                  -- ^ skip; cont...
-          | Return Int (Maybe Int) Cont                -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
-          | GetBlocked                                 -- ^ Dummy instruction to be returned by sched'
+-- data Stmt = Assign Int Rhs Cont -- ^ "attr" := Rhs; cont...
+--           | Await Int Cont      -- ^ await "attr"; cont...
+--           | If BExp (Cont -> Stmt) (Cont -> Stmt) Cont -- ^ if pred ThenClause ElseClause; cont... 
+--           | While BExp (Cont -> Stmt) Cont             -- ^ while pred BodyClause; cont...
+--           | Skip Cont                                  -- ^ skip; cont...
+--           | Return Int (Maybe Int) Cont                -- ^ return "attr" WriteBack; cont... (note: if it is a sync call then we pass as an argument to return, the attribute to write back to, if it is async call then we pass Nothing)
+--           | GetBlocked                                 -- ^ Dummy instruction to be returned by sched'
 
 -- | the RHS of an assignment
 data Rhs = New

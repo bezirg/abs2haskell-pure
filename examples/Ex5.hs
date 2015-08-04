@@ -27,19 +27,19 @@ attrs@(x:y:f:z:_) = [1..4]
 
 main_ :: Method
 main_ [] this wb k = 
-                     Assign x (Sync m1 []) (Assign y (Attr x) k)
+                     assign x (Sync m1 []) (assign y (Attr x) k)
 
 m1 :: Method
 m1 [] this wb k = 
-                  Assign y New $ 
-                      Assign f (Async y m2 []) $ 
-                          Assign z (Get f) $ 
-                              Return z wb k
+                  assign y New $ 
+                      assign f (Async y m2 []) $ 
+                          assign z (Get f) $ 
+                              return_ z wb k
 
 m2 :: Method
 m2 [] this wb k = 
-                  Assign z New $ 
-                      Return z wb k
+                  assign z New $ 
+                      return_ z wb k
 
 main :: IO ()
 main = printHeap =<< run 11 main_ (length attrs+1)

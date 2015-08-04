@@ -4,7 +4,7 @@
 module Sched (run',run) where
 
 import Base
-import Eval
+import Prim (return_)
 import qualified Q
 import Data.Sequence as S
 import qualified Data.Vector.Mutable as V
@@ -41,7 +41,7 @@ run maxIters mainMethod attrArrSize = do
   -- put the main-object in the object heap
   (initObjVec `V.write` mainObjRef) (initAttrVec, S.singleton $ Proc (mainFutRef
                                                                      -- async call to main method
-                                                                     ,mainMethod [] mainObjRef Nothing (last_main)
+                                                                     ,mainMethod [] mainObjRef Nothing last_main
                                                                      ))
 
   -- putting the main-destiny as unresolved
@@ -56,14 +56,14 @@ run maxIters mainMethod attrArrSize = do
 
   sched maxIters 0 (initHeap,initSchedQueue)
   where
-      last_main :: Stmt
-      last_main = Return 0 Nothing (error "call to main: main is a special block")	
+      last_main :: Cont
+      last_main = return_ 0 Nothing (error "call to main: main is a special block")	
 
       -- | The global-system scheduler simply picks (in a round-robin) a next object to execute from the queue,  
       -- and calls `eval` on that object
       sched :: Int               -- ^ current iteration 
              -> Int               -- ^ real steps (ignoring 'get' on unresolved futures)
-             -> (Heap,SchedQueue) -- ^ an initial program configuration
+             -> (Heap,SchedQueue) -- ^ current program configuration
              -> IO Heap             -- ^ the message
       sched n real (h,pt)
           | n < 0 = error "iterations must be positive"
@@ -71,14 +71,20 @@ run maxIters mainMethod attrArrSize = do
           | Q.isEmpty pt = traceIO ("Real steps:\t" ++ show real ++ "\nTotal steps:\t" ++ show (maxIters-n)) >> return h
           | otherwise = do
         let (firstObj,restObjs) = Q.pop pt
-        (execedStmt, addedSched, h') <- eval firstObj h attrArrSize
-        let pt' = foldl Q.snoc restObjs  addedSched
-        sched (n-1) (countIns execedStmt real) (h', pt')
+        (_, pqueue) <- objects h `V.read` firstObj
+        case S.viewl pqueue of
+          S.EmptyL -> error "empty object-process-queue: this should not happen"
+          Proc (_,cont) S.:< _ -> do
+            (addedSched, h') <- cont (firstObj,h)
+            let pt' = foldl Q.snoc restObjs  addedSched
+            sched (n-1) 
+                  0 --(countIns execedStmt real)
+                  (h', pt')
 
 
-countIns :: Stmt -> Int -> Int
-countIns GetBlocked n = n
-countIns _ n = n+1
+-- countIns :: Stmt -> Int -> Int
+-- countIns GetBlocked n = n
+-- countIns _ n = n+1
 
 -- | Initial size of each heap (object heap and future heap)
 heapInitialSize :: Int

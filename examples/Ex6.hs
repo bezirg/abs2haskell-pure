@@ -68,57 +68,57 @@ attrs@(o:f:t:[]) = [1..3]
 main_ :: Method
 main_ [] this wb k =  
                      -- Creating 22 objects
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
-                     Assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
+                     assign o New $ 
                      -- Creating 22 Futures
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) $ 
-                     Assign f (Async o m1 []) k
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) $ 
+                     assign f (Async o m1 []) k
 
 
 m1 :: Method
 m1 [] this wb k =  
-                  Assign t (Param this) $ 
-                  Return t wb k
+                  assign t (Param this) $ 
+                  return_ t wb k
 
 main :: IO ()
 main = printHeap =<< run 89 main_ (length attrs+1)

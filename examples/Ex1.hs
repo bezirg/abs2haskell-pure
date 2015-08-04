@@ -14,9 +14,9 @@ attrs@(t:x:y:[]) = [1..3]
 
 main_ :: Method
 main_ [] this wb k =
-                     Assign t (Param this) $
-                         Assign x New $
-                             Assign y (Attr x) k
+                     assign t (Param this) $
+                            assign x New $
+                                   assign y (Attr x) k
 main :: IO ()
 main = printHeap =<< run 10 main_ (length attrs+1)
 
