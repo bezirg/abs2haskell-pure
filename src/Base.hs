@@ -62,7 +62,7 @@ type Futures = IOVector (Either [ObjRef] Ref)
 
 -- | We have a single (universal) type for our continuations. 
 -- Later, if we introduce local-variables we are going to need an extra type for Continuations: 'Ref -> Stmt'
-type Cont = () -> Stmt
+type Cont = Stmt
 
 -- | Each process is a pair of its destiny future-reference, and its (resumable) continuation
 --

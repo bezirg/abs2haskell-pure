@@ -19,14 +19,14 @@ m1 = {
 attrs@(x:f:y:z:[]) = [1..4]
 
 main_ :: Method
-main_ [] this wb k = \ () ->
-  Assign x New $ \ () ->
-    Assign f (Async x m1 []) $ \ () ->
+main_ [] this wb k =
+  Assign x New $
+    Assign f (Async x m1 []) $
         Assign y (Get f) k
 
 m1 :: Method
-m1 [] this wb k = \ () ->
-  Assign z New $ \ () ->
+m1 [] this wb k =
+  Assign z New $
       Return z wb k
 
 main :: IO ()

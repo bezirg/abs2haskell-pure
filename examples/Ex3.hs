@@ -22,17 +22,17 @@ m1 = {
 attrs@(x:f:y:z:[]) = [1..4]
 
 main_ :: Method
-main_ [] this wb k = \ () ->
-                     Assign  x New $ \ () ->
-                         Assign f (Async x m1 []) $ \ () ->
+main_ [] this wb k =
+                     Assign  x New $
+                         Assign f (Async x m1 []) $
                              Assign y (Get f) k
 
 
 m1 :: Method
-m1 [] this wb k = \ () ->
-                  Assign z New $ \ () ->
+m1 [] this wb k = 
+                  Assign z New $ 
                       While (z `BEq` z) 
-                                (\ k' -> Skip k') $ \ () ->
+                                (\ k' -> Skip k') $ 
                                     Return z wb k
 
 
@@ -48,6 +48,7 @@ Heap: {
     Counter: 5
 }
  -}
+
 
 
 

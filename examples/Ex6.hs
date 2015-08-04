@@ -66,58 +66,58 @@ attrs@(o:f:t:[]) = [1..3]
 
 
 main_ :: Method
-main_ [] this wb k = \ () -> 
+main_ [] this wb k =  
                      -- Creating 22 objects
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
-                     Assign o New $ \ () ->
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
+                     Assign o New $ 
                      -- Creating 22 Futures
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
-                     Assign f (Async o m1 []) $ \ () ->
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
+                     Assign f (Async o m1 []) $ 
                      Assign f (Async o m1 []) k
 
 
 m1 :: Method
-m1 [] this wb k = \ () -> 
-                  Assign t (Param this) $ \ () ->
+m1 [] this wb k =  
+                  Assign t (Param this) $ 
                   Return t wb k
 
 main :: IO ()

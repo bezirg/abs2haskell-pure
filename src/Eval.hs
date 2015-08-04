@@ -18,7 +18,7 @@ eval this h attrArrSize = do
   (attrs,pqueue) <- objects h `V.read` this
   case S.viewl pqueue of
      S.EmptyL -> error "this should not happen: scheduled an empty-proc object"
-     (Proc (destiny, c) S.:< restProcs) -> let res = c ()
+     (Proc (destiny, c) S.:< restProcs) -> let res = c
                                           in case res of
         Skip k' -> do
                 updateObj $ Left k'
@@ -46,15 +46,15 @@ eval this h attrArrSize = do
         If bexp t e k' -> do
                         bres <- beval bexp
                         updateObj $ Left $ if bres
-                                           then \ () -> t k'
-                                           else \ () -> e k'
+                                           then t k'
+                                           else e k'
                         return (res, 
                           [this],
                           h)
         While bexp s k' -> do
                         bres <- beval bexp
                         updateObj $ Left $ if bres
-                                           then \ () -> While bexp s k'
+                                           then While bexp s k'
                                            else k'
                         return (res,
                                 [this],
@@ -121,7 +121,7 @@ eval this h attrArrSize = do
                           derefed_params
                           calleeObj
                           Nothing -- no writeback
-                          (\ _ -> error "this async method did not call return") -- tying up the knot: nothing left to execute after the process is finished
+                          (error "this async method did not call return") -- tying up the knot: nothing left to execute after the process is finished
             let newProc = Proc (newRef h, newCont)
             (attrs `V.write` lhs) (newRef h) 
             updateObj (Left k')

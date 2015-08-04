@@ -26,19 +26,19 @@ m2 = {
 attrs@(x:y:f:z:_) = [1..4]
 
 main_ :: Method
-main_ [] this wb k = \ () ->
-                     Assign x (Sync m1 []) (\ () -> Assign y (Attr x) k)
+main_ [] this wb k = 
+                     Assign x (Sync m1 []) (Assign y (Attr x) k)
 
 m1 :: Method
-m1 [] this wb k = \ () ->
-                  Assign y New $ \ () -> 
-                      Assign f (Async y m2 []) $ \ () ->
-                          Assign z (Get f) $ \ () ->
+m1 [] this wb k = 
+                  Assign y New $ 
+                      Assign f (Async y m2 []) $ 
+                          Assign z (Get f) $ 
                               Return z wb k
 
 m2 :: Method
-m2 [] this wb k = \ () ->
-                  Assign z New $ \ () ->
+m2 [] this wb k = 
+                  Assign z New $ 
                       Return z wb k
 
 main :: IO ()

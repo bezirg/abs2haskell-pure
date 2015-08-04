@@ -26,20 +26,20 @@ go [current]this :=
 
 
 main_ :: Method
-main_ [] this wb k = \ () ->
-    Assign next (Param 100) $ \ () ->
+main_ [] this wb k = 
+    Assign next (Param 100) $ 
     Assign next (Sync go [next]) k
 
 go :: Method
-go [current] this wb k = \ () ->
-  Assign next (Param (current-1)) $ \ () ->
-  Assign zero (Param 0) $ \ () -> -- constant
+go [current] this wb k = 
+  Assign next (Param (current-1)) $ 
+  Assign zero (Param 0) $ -- constant
   If (BNeg (next `BEq` zero))
      (\ k' -> 
-             Assign r New $ \ () ->
-             Assign g (Async r go [next]) $ \ () ->
+             Assign r New $ 
+             Assign g (Async r go [next]) $ 
              Await g k')
-     Skip $ \ () ->
+     Skip $ 
   Return next wb k -- dummy
   
 

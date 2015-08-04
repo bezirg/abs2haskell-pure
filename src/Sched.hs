@@ -41,7 +41,7 @@ run maxIters mainMethod attrArrSize = do
   -- put the main-object in the object heap
   (initObjVec `V.write` mainObjRef) (initAttrVec, S.singleton $ Proc (mainFutRef
                                                                      -- async call to main method
-                                                                     ,mainMethod [] mainObjRef Nothing (\ () -> last_main)
+                                                                     ,mainMethod [] mainObjRef Nothing (last_main)
                                                                      ))
 
   -- putting the main-destiny as unresolved
