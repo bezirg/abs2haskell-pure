@@ -54,7 +54,7 @@ eval this h attrArrSize = do
         While bexp s k' -> do
                         bres <- beval bexp
                         updateObj $ Left $ if bres
-                                           then While bexp s k'
+                                           then s (While bexp s k')
                                            else k'
                         return (res,
                                 [this],

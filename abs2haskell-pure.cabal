@@ -1,5 +1,5 @@
 name: abs2haskell-pure
-version: 0.3.0
+version: 0.3.1
 synopsis: A "pure" implementation of an ABS-subset for analysis purposes
 description: A "pure" implementation of an ABS-subset for analysis purposes
 author: Nikolaos Bezirgiannis, Enrique Martin, Elvira Albert, Frank de Boer
