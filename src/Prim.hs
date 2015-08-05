@@ -1,3 +1,4 @@
+{-# LANGUAGE ImplicitParams #-}
 module Prim where
 
 import Base
@@ -9,7 +10,7 @@ import Debug.Trace
 skip :: Cont -> Cont
 skip k (this,h) = do
   updateFront (this,h) k
-  return ([this], h)
+  return ([this], h, 1)
 
 if_ :: BExp -> (t -> Cont) -> (t -> Cont) -> t -> Cont
 if_ bexp t e k (this,h) = do
@@ -18,7 +19,7 @@ if_ bexp t e k (this,h) = do
   updateFront (this,h) $ (if bres
                          then t k
                          else e k)
-  return ([this],h)
+  return ([this],h, 1)
 
 
 while :: BExp -> (Cont -> Cont) -> Cont -> Cont
@@ -28,7 +29,7 @@ while bexp s k (this,h) = do
   updateFront (this,h) (if bres
                         then s (while bexp s k)
                         else k)
-  return ([this], h)
+  return ([this], h, 1)
 
 -- NOTE-TO-SELF: updateFront before growing the array
 
@@ -40,19 +41,19 @@ assign lhs New k (this,h) = do
   initAttrVec <- V.replicate ?attrArrSize (-1)
   (objects h `V.write` newRef h) (initAttrVec, S.empty)
   h' <- incCounterMaybeGrow h
-  return ([this], h')
+  return ([this], h', 1)
 
 assign lhs (Param r) k (this,h) = do
   (attrs,_) <- objects h `V.read` this
   (attrs `V.write` lhs) r
   updateFront (this,h) k
-  return ([this], h)
+  return ([this], h, 1)
 
 assign lhs (Attr a) k (this,h) = do
   (attrs,_) <- objects h `V.read` this
   (attrs `V.write` lhs) =<< (attrs `V.read` a) 
   updateFront (this,h) k
-  return ([this], h)
+  return ([this], h, 1)
 
 assign lhs (Get a) k (this,h) = do
   (attrs,_) <- objects h `V.read` this
@@ -64,13 +65,13 @@ assign lhs (Get a) k (this,h) = do
                           when (null blockedCallers) $ (futures h `V.write` f) (Left [this]) -- add this to the blockers
                         --return (res, 
                           -- return -- (GetBlocked, -- dummy instruction to express that 'get' is blocked
-                          updateFront (this,h) $ (assign lhs (Get a) k) -- when&if re-scheduled, it should be resolved by re-running
-                          return ([], h) -- don't re-sched this right now
+                          updateFront (this,h) $ assign lhs (Get a) k -- when&if re-scheduled, it should be resolved by re-running
+                          return ([], h, 0) -- don't re-sched this right now
     -- already-resolved future
     Right v -> do
               (attrs `V.write` lhs) v 
               updateFront (this,h) k
-              return ([this], h)
+              return ([this], h, 1)
 
 assign lhs (Sync m params) k (this,h) = do
   (attrs,_) <- objects h `V.read` this
@@ -80,7 +81,7 @@ assign lhs (Sync m params) k (this,h) = do
                           this
                           (Just lhs)
                           k)
-  return ([this], h) 
+  return ([this], h, 1) 
 
 assign lhs (Async obj m params) k (this,h) = do
   updateFront (this,h) k
@@ -99,7 +100,8 @@ assign lhs (Async obj m params) k (this,h) = do
   (futures h `V.write` newRef h) (Left [])  -- create a new unresolved future
   h' <- incCounterMaybeGrow h
   return (this:[calleeObj  | S.null calleeProcQueue] 
-         ,h')
+         ,h'
+         ,1)
 
 await :: Int -> Cont -> Cont
 await attr k (this,h) = do
@@ -110,7 +112,7 @@ await attr k (this,h) = do
     Left _ -> updateBack (this,h) (await attr k) -- loop with await remaining
     -- already-resolved future
     Right _ -> updateFront (this,h) k
-  return ([this], h)
+  return ([this], h, 1)
 
 return_ :: Int -> Maybe Int -> Cont -> Cont
 return_ attr wb k (this,h) = do
@@ -120,7 +122,7 @@ return_ attr wb k (this,h) = do
     Just lhs -> do
             (attrs `V.write` lhs) =<< (attrs `V.read` attr) 
             updateFront (this,h) k
-            return ([this], h)
+            return ([this], h, 1)
     -- async call
     Nothing -> case S.viewl pqueue of
                 S.EmptyL -> error "this should not happen: running process-queue object"
@@ -131,8 +133,9 @@ return_ attr wb k (this,h) = do
                       Left blockedCallers -> do
                         (futures h `V.write` destiny) =<< liftM Right (attrs `V.read` attr) -- resolve the future
                         (objects h `V.write` this) (attrs, restProcs) -- throws away the current process because it is done
-                        return ([this | not $ S.null restProcs] ++ blockedCallers, -- schedule self if there are more processes, and wake-up the blocked callers
-                                h)
+                        return ([this | not $ S.null restProcs] ++ blockedCallers -- schedule self if there are more processes, and wake-up the blocked callers
+                               ,h
+                               ,1)
 
 -- | updates the object's process-queue by pushing to the front the new process (continuation) (or to the back if it resulted from an await)
 -- updateObj :: Heap -> Either Cont Cont -> IO ()

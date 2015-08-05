@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ImplicitParams, Rank2Types, BangPatterns #-}
 
 -- | The global scheduler that schedules COGs (single-objects in our case)
 --
@@ -12,6 +12,7 @@ import Data.Sequence as S
 import qualified Data.Vector.Mutable as V
 import Debug.Trace (traceIO)
 import Control.Monad (void)
+import Data.List (foldl')
 
 -- | The main entrypoint. Should be written in Haskell as:
 --
@@ -67,7 +68,7 @@ run maxIters mainMethod attrArrSize = do
             -> Int               -- ^ real steps (ignoring 'get' on unresolved futures)
             -> (Heap,SchedQueue) -- ^ current program configuration
             -> IO Heap             -- ^ the message
-      sched n real (h,pt)
+      sched !n !real (h,!pt)
           | n < 0 = error "iterations must be positive"
           | n == 0 = traceIO ("reached max steps\nLast SchedTable: " ++ show pt) >> return h
           | Q.isEmpty pt = traceIO ("Real steps:\t" ++ show real ++ "\nTotal steps:\t" ++ show (maxIters-n)) >> return h
@@ -77,12 +78,11 @@ run maxIters mainMethod attrArrSize = do
         case S.viewl pqueue of
           S.EmptyL -> error "empty object-process-queue: this should not happen"
           Proc (_,cont) S.:< _ -> do
-            (addedSched, h') <- cont (firstObj,h)
-            let pt' = foldl Q.snoc restObjs  addedSched
+            (addedSched, h', cost) <- cont (firstObj,h)
+            let pt' = foldl' Q.snoc restObjs  addedSched
             sched (n-1) 
-                  0 --(countIns execedStmt real)
+                  (real+cost)
                   (h', pt')
-
 
 -- countIns :: Stmt -> Int -> Int
 -- countIns GetBlocked n = n

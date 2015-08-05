@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ImplicitParams, Rank2Types #-}
 
 -- | The ABS' AST and the ABS-runtime data-structures
 module Base where
@@ -71,9 +71,7 @@ type Futures = IOVector (Either [ObjRef] Ref)
 -- (note: is a newtype just for overriding its Show instance, check module "PP")
 newtype Proc = Proc {fromProc :: (FutRef, Cont)}
 
-type Cont = (ObjRef, Heap) -> IO ([Ref], Heap)
-
-type CPS = Cont -> IO ([Ref], Heap)
+type Cont = (ObjRef, Heap) -> IO ([Ref], Heap, Int)
 
 -- | The global-system scheduler's runtime Process Table.
 --
