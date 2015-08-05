@@ -22,12 +22,13 @@ if_ bexp t e k (this,h) = do
                          else e k)
   return ([this],h)
 
-while :: BExp -> t -> Cont -> Cont
+
+while :: BExp -> (Cont -> Cont) -> Cont -> Cont
 while bexp s k (this,h) = do
   (attrs,_) <- objects h `V.read` this
   bres <- beval bexp attrs
   updateFront (this,h) (if bres
-                        then while bexp s k
+                        then s (while bexp s k)
                         else k)
   return ([this], h)
 
