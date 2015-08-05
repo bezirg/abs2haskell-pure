@@ -1,3 +1,5 @@
+{-# LANGUAGE Rank2Types #-}
+
 -- | The ABS' AST and the ABS-runtime data-structures
 module Base where
 
@@ -111,7 +113,8 @@ data BExp = BEq Ref Ref
 
 
 -- | The type of every top-level ABS-method.
-type Method = [Ref]             -- ^ a list of passed (deref) parameters
+type Method = (?attrArrSize :: Int) =>
+              [Ref]             -- ^ a list of passed (deref) parameters
             -> ObjRef            -- ^ this obj
             -> Maybe Ref         -- ^ in case of sync call: a writeback attribute to write the return result to
             -> Cont              -- ^ the continuation after the method is finished

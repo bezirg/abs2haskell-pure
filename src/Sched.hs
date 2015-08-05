@@ -1,3 +1,5 @@
+{-# LANGUAGE Rank2Types #-}
+
 -- | The global scheduler that schedules COGs (single-objects in our case)
 --
 -- The global scheduler employs a fixed roun-robin scheduling strategy.
@@ -41,7 +43,7 @@ run maxIters mainMethod attrArrSize = do
   -- put the main-object in the object heap
   (initObjVec `V.write` mainObjRef) (initAttrVec, S.singleton $ Proc (mainFutRef
                                                                      -- async call to main method
-                                                                     ,mainMethod [] mainObjRef Nothing last_main
+                                                                     ,let ?attrArrSize = attrArrSize in mainMethod [] mainObjRef Nothing last_main
                                                                      ))
 
   -- putting the main-destiny as unresolved
@@ -62,9 +64,9 @@ run maxIters mainMethod attrArrSize = do
       -- | The global-system scheduler simply picks (in a round-robin) a next object to execute from the queue,  
       -- and calls `eval` on that object
       sched :: Int               -- ^ current iteration 
-             -> Int               -- ^ real steps (ignoring 'get' on unresolved futures)
-             -> (Heap,SchedQueue) -- ^ current program configuration
-             -> IO Heap             -- ^ the message
+            -> Int               -- ^ real steps (ignoring 'get' on unresolved futures)
+            -> (Heap,SchedQueue) -- ^ current program configuration
+            -> IO Heap             -- ^ the message
       sched n real (h,pt)
           | n < 0 = error "iterations must be positive"
           | n == 0 = traceIO ("reached max steps\nLast SchedTable: " ++ show pt) >> return h

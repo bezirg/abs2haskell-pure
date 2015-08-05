@@ -1,4 +1,6 @@
-module TestWhile where
+{-# LANGUAGE ImplicitParams #-}
+
+module Main where
 
 import ABS
 

@@ -1,5 +1,5 @@
 name: abs2haskell-pure
-version: 0.3.3
+version: 0.3.6
 synopsis: A "pure" implementation of an ABS-subset for analysis purposes
 description: A "pure" implementation of an ABS-subset for analysis purposes
 author: Nikolaos Bezirgiannis, Enrique Martin, Elvira Albert, Frank de Boer
@@ -33,7 +33,8 @@ library
                       ABS
   other-modules:
                       -- * purely-functional queues (taken from Okasaki)
-                      Q                                    
+                      Q
+  extensions:         ImplicitParams                                    
   hs-source-dirs:     src
   ghc-options:        -Wall
                                                                                         

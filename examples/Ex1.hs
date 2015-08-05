@@ -1,3 +1,4 @@
+{-# LANGUAGE ImplicitParams #-}
 module Main where
 
 import ABS

@@ -6,8 +6,6 @@ import Control.Monad (when,liftM, liftM2)
 import qualified Data.Sequence as S
 import Debug.Trace
 
-attrArrSize = 100
-
 skip :: Cont -> Cont
 skip k (this,h) = do
   updateFront (this,h) k
@@ -34,11 +32,12 @@ while bexp s k (this,h) = do
 
 -- NOTE-TO-SELF: updateFront before growing the array
 
+assign :: (?attrArrSize::Int) => Int -> Rhs -> Cont -> Cont
 assign lhs New k (this,h) = do
   updateFront (this,h) k
   (attrs,_) <- objects h `V.read` this
   (attrs `V.write` lhs) $ newRef h
-  initAttrVec <- V.replicate attrArrSize (-1)
+  initAttrVec <- V.replicate ?attrArrSize (-1)
   (objects h `V.write` newRef h) (initAttrVec, S.empty)
   h' <- incCounterMaybeGrow h
   return ([this], h')
