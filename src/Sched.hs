@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 -- | The global scheduler that schedules COGs (single-objects in our case)
 --
 -- The global scheduler employs a fixed roun-robin scheduling strategy.
@@ -10,6 +11,7 @@ import Data.Sequence as S
 import qualified Data.Vector.Mutable as V
 import Debug.Trace (traceIO)
 import Control.Monad (void)
+import Data.List (foldl')
 
 -- | The main entrypoint. Should be written in Haskell as:
 --
@@ -65,14 +67,14 @@ run maxIters mainMethod attrArrSize = do
              -> Int               -- ^ real steps (ignoring 'get' on unresolved futures)
              -> (Heap,SchedQueue) -- ^ an initial program configuration
              -> IO Heap             -- ^ the message
-      sched n real (h,pt)
+      sched !n !real (h,!pt)
           | n < 0 = error "iterations must be positive"
           | n == 0 = traceIO ("reached max steps\nLast SchedTable: " ++ show pt) >> return h
           | Q.isEmpty pt = traceIO ("Real steps:\t" ++ show real ++ "\nTotal steps:\t" ++ show (maxIters-n)) >> return h
           | otherwise = do
         let (firstObj,restObjs) = Q.pop pt
         (execedStmt, addedSched, h') <- eval firstObj h attrArrSize
-        let pt' = foldl Q.snoc restObjs  addedSched
+        let pt' = foldl' Q.snoc restObjs  addedSched
         sched (n-1) (countIns execedStmt real) (h', pt')
 
 
